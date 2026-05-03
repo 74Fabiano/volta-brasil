@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planejamento Volta ao Brasil — Fabiano</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --bg: #f7f6f2;
+    --surface: #ffffff;
+    --surface-2: #f1efe8;
+    --text: #1a1a18;
+    --text-2: #5f5e5a;
+    --text-3: #888780;
+    --border: rgba(0,0,0,0.12);
+    --border-strong: rgba(0,0,0,0.25);
+    --accent: #185FA5;
+    --accent-bg: #E6F1FB;
+    --accent-text: #0C447C;
+    --warn-bg: #FAEEDA;
+    --warn-text: #633806;
+    --danger-bg: #FCEBEB;
+    --danger-text: #791F1F;
+    --success-bg: #EAF3DE;
+    --success-text: #27500A;
+    --p1-bg: #FCEBEB; --p1-text: #791F1F;
+    --p2-bg: #FAEEDA; --p2-text: #633806;
+    --p3-bg: #E6F1FB; --p3-text: #0C447C;
+    --r-md: 8px;
+    --r-lg: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a18;
+      --surface: #26261f;
+      --surface-2: #2c2c25;
+      --text: #f1efe8;
+      --text-2: #b4b2a9;
+      --text-3: #888780;
+      --border: rgba(255,255,255,0.12);
+      --border-strong: rgba(255,255,255,0.3);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px 16px 60px;
+  }
+  header { margin-bottom: 24px; }
+  header h1 { font-size: 24px; font-weight: 500; margin: 0 0 4px; }
+  header p { color: var(--text-2); margin: 0; font-size: 14px; }
+  .tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 0.5px solid var(--border);
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .tab {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 10px 14px;
+    font-size: 14px;
+    color: var(--text-2);
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .tab.active {
+    color: var(--text);
+    border-bottom-color: var(--text);
+    font-weight: 500;
+  }
+  .tab:hover:not(.active) { color: var(--text); }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .metric {
+    background: var(--surface-2);
+    border-radius: var(--r-md);
+    padding: 14px;
+  }
+  .metric-label { font-size: 12px; color: var(--text-2); margin: 0 0 6px; }
+  .metric-value { font-size: 22px; font-weight: 500; margin: 0; }
+  .metric-sub { font-size: 11px; color: var(--text-3); margin: 4px 0 0; }
+  .card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 16px 20px;
+    margin-bottom: 16px;
+  }
+  .h3 { font-size: 16px; font-weight: 500; margin: 0 0 12px; }
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .row label {
+    font-size: 13px;
+    color: var(--text-2);
+    min-width: 130px;
+  }
+  .row input[type="range"] { flex: 1; min-width: 100px; }
+  .row .out {
+    font-size: 14px;
+    font-weight: 500;
+    min-width: 90px;
+    text-align: right;
+  }
+  input[type="text"], input[type="number"], input[type="url"], select, textarea {
+    background: var(--surface);
+    border: 0.5px solid var(--border-strong);
+    border-radius: var(--r-md);
+    padding: 6px 10px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 13px;
+  }
+  input[type="text"]:focus, input[type="number"]:focus, input[type="url"]:focus, select:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: -1px;
+  }
+  button {
+    background: transparent;
+    border: 0.5px solid var(--border-strong);
+    border-radius: var(--r-md);
+    padding: 6px 12px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  button:hover { background: var(--surface-2); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: white; }
+  button.primary:hover { opacity: 0.9; background: var(--accent); }
+  button.danger { color: var(--danger-text); border-color: var(--danger-text); }
+  table { width: 100%; font-size: 13px; border-collapse: collapse; }
+  th { text-align: left; font-weight: 500; color: var(--text-2); padding: 8px 6px; border-bottom: 0.5px solid var(--border); }
+  td { padding: 8px 6px; border-bottom: 0.5px solid var(--border); vertical-align: middle; }
+  .check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 0.5px solid var(--border);
+    font-size: 13px;
+  }
+  .check-item:last-child { border-bottom: none; }
+  .check-item input { margin-top: 3px; }
+  .pill {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 500;
+  }
+  .pill-p1 { background: var(--p1-bg); color: var(--p1-text); }
+  .pill-p2 { background: var(--p2-bg); color: var(--p2-text); }
+  .pill-p3 { background: var(--p3-bg); color: var(--p3-text); }
+  .alert { border-radius: var(--r-md); padding: 10px 12px; font-size: 13px; margin-bottom: 16px; }
+  .alert-warn { background: var(--warn-bg); color: var(--warn-text); }
+  .alert-info { background: var(--accent-bg); color: var(--accent-text); }
+  .alert-danger { background: var(--danger-bg); color: var(--danger-text); }
+  .alert-success { background: var(--success-bg); color: var(--success-text); }
+  .chart-wrap { position: relative; width: 100%; height: 280px; margin-bottom: 16px; }
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+    align-items: center;
+  }
+  .toolbar .spacer { flex: 1; }
+  .room-section { margin-bottom: 24px; }
+  .room-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .room-title { font-size: 15px; font-weight: 500; margin: 0; }
+  .room-total { font-size: 14px; font-weight: 500; color: var(--text-2); }
+  .item-row td { padding: 6px; }
+  .item-row input[type="text"], .item-row input[type="url"], .item-row input[type="number"] {
+    width: 100%;
+    padding: 4px 6px;
+    font-size: 12px;
+  }
+  .item-row select { width: 100%; padding: 4px 6px; font-size: 12px; }
+  .item-row .link-btn {
+    text-decoration: none;
+    color: var(--accent);
+    font-size: 12px;
+    padding: 4px 8px;
+    border: 0.5px solid var(--border);
+    border-radius: var(--r-md);
+    display: inline-block;
+  }
+  .item-row .link-btn:hover { background: var(--accent-bg); }
+  .item-row .del-btn {
+    background: transparent;
+    border: none;
+    color: var(--danger-text);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px 8px;
+  }
+  .add-btn {
+    margin-top: 8px;
+    background: transparent;
+    border: 0.5px dashed var(--border-strong);
+    color: var(--text-2);
+    padding: 6px 12px;
+    width: 100%;
+    border-radius: var(--r-md);
+    cursor: pointer;
+    font-size: 12px;
+  }
+  .add-btn:hover { background: var(--surface-2); color: var(--text); }
+  .summary-box {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .summary-cell {
+    background: var(--surface-2);
+    padding: 10px 12px;
+    border-radius: var(--r-md);
+  }
+  .summary-cell .lbl { font-size: 11px; color: var(--text-2); }
+  .summary-cell .val { font-size: 16px; font-weight: 500; }
+  .col-item { width: 28%; }
+  .col-loja { width: 14%; }
+  .col-link { width: 8%; }
+  .col-qtd { width: 6%; }
+  .col-valor { width: 12%; }
+  .col-total { width: 12%; }
+  .col-prio { width: 10%; }
+  .col-status { width: 10%; }
+  @media (max-width: 800px) {
+    .item-row { display: block; padding: 10px 0; border-bottom: 0.5px solid var(--border); }
+    .item-row td { display: block; padding: 4px 0; }
+    .col-item, .col-loja, .col-link, .col-qtd, .col-valor, .col-total, .col-prio, .col-status { width: 100%; }
+    table thead { display: none; }
+  }
+  .saved-indicator {
+    font-size: 11px;
+    color: var(--success-text);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .saved-indicator.show { opacity: 1; }
+  .sim-out {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 120px;
+    justify-content: flex-end;
+  }
+  .sim-out .prefix, .sim-out .suffix {
+    font-size: 13px;
+    color: var(--text-2);
+    font-weight: 500;
+  }
+  .sim-out input[type="number"] {
+    width: 80px;
+    text-align: right;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 4px 8px;
+    -moz-appearance: textfield;
+  }
+  .sim-out input[type="number"]::-webkit-outer-spin-button,
+  .sim-out input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Planejamento da volta ao Brasil</h1>
+    <p>Fabiano — horizonte de 12 meses · cidade do interior · família de 3</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="resumo">Resumo</button>
+    <button class="tab" data-tab="cronograma">Cronograma</button>
+    <button class="tab" data-tab="checklist">Checklist</button>
+    <button class="tab" data-tab="lista">Lista de compras</button>
+    <button class="tab" data-tab="invest">Investimentos</button>
+  </div>
+
+  <!-- ====== RESUMO ====== -->
+  <div class="panel active" data-panel="resumo">
+    <div class="grid-3">
+      <div class="metric">
+        <p class="metric-label">Meta total estimada</p>
+        <p class="metric-value" id="m-meta">R$ 58.000</p>
+        <p class="metric-sub">carro + recheio + reserva</p>
+      </div>
+      <div class="metric">
+        <p class="metric-label">Acumulado em 12 meses</p>
+        <p class="metric-value" id="m-acum">R$ 50.500</p>
+        <p class="metric-sub">poupança + bônus + venda PT</p>
+      </div>
+      <div class="metric">
+        <p class="metric-label">Gap / sobra</p>
+        <p class="metric-value" id="m-gap">-R$ 7.500</p>
+        <p class="metric-sub" id="m-gap-sub">precisa ajustar</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="h3">Simulador de cenários</h3>
+      <p style="font-size:12px;color:var(--text-3);margin:0 0 14px;">Arraste o slider ou digite o valor diretamente no campo à direita.</p>
+      <div class="row">
+        <label>Câmbio €→R$</label>
+        <input type="range" id="s-cambio" min="5" max="7" step="0.01" value="6">
+        <span class="sim-out">
+          <span class="prefix">R$</span>
+          <input type="number" id="i-cambio" min="0" step="0.01" value="6.00">
+        </span>
+      </div>
+      <div class="row">
+        <label>Poupança mensal (€)</label>
+        <input type="range" id="s-mensal" min="0" max="2000" step="10" value="250">
+        <span class="sim-out">
+          <span class="prefix">€</span>
+          <input type="number" id="i-mensal" min="0" step="10" value="250">
+        </span>
+      </div>
+      <div class="row">
+        <label>Bônus fim de ano (€)</label>
+        <input type="range" id="s-bonus" min="0" max="15000" step="100" value="5000">
+        <span class="sim-out">
+          <span class="prefix">€</span>
+          <input type="number" id="i-bonus" min="0" step="100" value="5000">
+        </span>
+      </div>
+      <div class="row">
+        <label>Venda móveis PT (€)</label>
+        <input type="range" id="s-venda" min="0" max="8000" step="50" value="1750">
+        <span class="sim-out">
+          <span class="prefix">€</span>
+          <input type="number" id="i-venda" min="0" step="50" value="1750">
+        </span>
+      </div>
+      <div class="row">
+        <label>Prazo (meses)</label>
+        <input type="range" id="s-prazo" min="1" max="36" step="1" value="12">
+        <span class="sim-out">
+          <input type="number" id="i-prazo" min="1" step="1" value="12">
+          <span class="suffix">meses</span>
+        </span>
+      </div>
+      <div class="row">
+        <label>Meta total (R$)</label>
+        <input type="range" id="s-meta" min="10000" max="200000" step="500" value="58000">
+        <span class="sim-out">
+          <span class="prefix">R$</span>
+          <input type="number" id="i-meta" min="0" step="500" value="58000">
+        </span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="h3">Composição da meta</h3>
+      <table>
+        <tr><td>Carro usado</td><td style="text-align:right;">R$ 10.000 – 20.000</td></tr>
+        <tr><td>Moto usada (fase 2, após estabilizar)</td><td style="text-align:right;">R$ 10.000 – 15.000</td></tr>
+        <tr><td>Recheio da casa (básico)</td><td style="text-align:right;">R$ 20.000 – 35.000</td></tr>
+        <tr><td>Reserva de emergência (~6 meses)</td><td style="text-align:right;">R$ 18.000</td></tr>
+        <tr><td>Mudança / passagens / docs</td><td style="text-align:right;">R$ 6.000 – 10.000</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ====== CRONOGRAMA ====== -->
+  <div class="panel" data-panel="cronograma">
+    <div class="alert alert-info">Marcos: bônus de fim de ano (mês 12) + venda dos móveis (mês 11–12).</div>
+    <div class="chart-wrap">
+      <canvas id="grafico-evolucao" role="img" aria-label="Evolução mensal da poupança ao longo de 12 meses"></canvas>
+    </div>
+    <div class="card">
+      <h3 class="h3">Marcos por mês</h3>
+      <table>
+        <thead><tr><th>Mês</th><th>Ação principal</th><th style="text-align:right;">Saldo (R$)</th></tr></thead>
+        <tbody id="tbody-meses"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ====== CHECKLIST ====== -->
+  <div class="panel" data-panel="checklist">
+    <div class="card">
+      <h3 class="h3">Carro <span class="pill pill-p1">Prioridade 1</span></h3>
+      <div class="check-item"><input type="checkbox"><span>Pesquisar modelos populares confiáveis (Onix, HB20, Mobi, Kwid usados)</span></div>
+      <div class="check-item"><input type="checkbox"><span>Definir orçamento final: R$ 10–20 mil</span></div>
+      <div class="check-item"><input type="checkbox"><span>Atualizar CNH brasileira antes da volta (PT permite renovação)</span></div>
+      <div class="check-item"><input type="checkbox"><span>Reservar verba para IPVA, transferência e seguro (~R$ 3 mil extra)</span></div>
+      <div class="check-item"><input type="checkbox"><span>Pesquisar lojas/plataformas confiáveis na cidade alvo</span></div>
+    </div>
+
+    <div class="card">
+      <h3 class="h3">Recheio da casa <span class="pill pill-p1">Prioridade 1</span></h3>
+      <p style="font-size:13px;color:var(--text-2);margin:0 0 10px;">Detalhamento dos itens está na aba <b>Lista de compras</b>.</p>
+      <div class="check-item"><input type="checkbox"><span>Pesquisar lojas regionais antes (Magalu, Casas Bahia, Mercado Livre, lojas locais)</span></div>
+      <div class="check-item"><input type="checkbox"><span>Comparar preços e definir lista final 2–3 meses antes da volta</span></div>
+      <div class="check-item"><input type="checkbox"><span>Avaliar comprar online com entrega no endereço novo (alguns itens)</span></div>
+    </div>
+
+    <div class="card">
+      <h3 class="h3">Moto <span class="pill pill-p2">Fase 2</span></h3>
+      <div class="check-item"><input type="checkbox"><span>Comprar 6–12 meses depois da chegada, com renda já estabilizada</span></div>
+      <div class="check-item"><input type="checkbox"><span>Modelos econômicos: Honda Biz/CG 150 ou Yamaha Factor</span></div>
+      <div class="check-item"><input type="checkbox"><span>Guardar IPVA + capacete + equipamento de proteção (~R$ 2 mil extra)</span></div>
+    </div>
+
+    <div class="card">
+      <h3 class="h3">Mudança e logística <span class="pill pill-p3">Atenção</span></h3>
+      <div class="check-item"><input type="checkbox"><span>Vender móveis em PT 3 meses antes (OLX, Custo Justo, grupos FB)</span></div>
+      <div class="check-item"><input type="checkbox"><span>Cancelar contratos: aluguel, luz, água, gás, internet, telemóvel</span></div>
+      <div class="check-item"><input type="checkbox"><span>Documentação: declaração final IRS, certidões, vacinas filho</span></div>
+      <div class="check-item"><input type="checkbox"><span>Escola do filho no Brasil (matrícula antecipada se possível)</span></div>
+      <div class="check-item"><input type="checkbox"><span>Reservar hospedagem inicial (Airbnb/pousada 1ª semana)</span></div>
+      <div class="check-item"><input type="checkbox"><span>Aluguel já pesquisado antes da chegada (caução = 1–3 meses)</span></div>
+    </div>
+  </div>
+
+  <!-- ====== LISTA DE COMPRAS ====== -->
+  <div class="panel" data-panel="lista">
+    <div class="alert alert-info" id="sync-status-alert">
+      <span id="sync-status-text">⚙️ Configure a URL da API do Google Sheets para sincronizar entre dispositivos.</span>
+      <button onclick="configurarAPI()" style="margin-left:8px;">Configurar API</button>
+    </div>
+
+    <div class="toolbar">
+      <button class="primary" onclick="recarregarDaNuvem()">🔄 Recarregar da nuvem</button>
+      <button onclick="exportJSON()">⬇ Exportar JSON</button>
+      <button onclick="document.getElementById('import-file').click()">⬆ Importar JSON</button>
+      <input type="file" id="import-file" accept=".json" style="display:none;" onchange="importJSON(event)">
+      <button onclick="exportCSV()">📊 Exportar CSV (Excel)</button>
+      <span class="saved-indicator" id="saved-indicator">✓ Salvo</span>
+      <span class="spacer"></span>
+      <button class="danger" onclick="resetLista()">↺ Restaurar lista padrão</button>
+    </div>
+
+    <div class="summary-box">
+      <div class="summary-cell">
+        <div class="lbl">Total geral</div>
+        <div class="val" id="sum-total">R$ 0</div>
+      </div>
+      <div class="summary-cell">
+        <div class="lbl">Itens</div>
+        <div class="val" id="sum-itens">0</div>
+      </div>
+      <div class="summary-cell">
+        <div class="lbl">Comprados</div>
+        <div class="val" id="sum-comprados">0</div>
+      </div>
+      <div class="summary-cell">
+        <div class="lbl">Falta comprar</div>
+        <div class="val" id="sum-falta">R$ 0</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="h3">Resumo por prioridade</h3>
+      <table>
+        <thead><tr><th>Prioridade</th><th style="text-align:right;">Itens</th><th style="text-align:right;">Total</th></tr></thead>
+        <tbody id="prio-summary"></tbody>
+      </table>
+    </div>
+
+    <div id="rooms-container"></div>
+  </div>
+
+  <!-- ====== INVESTIMENTOS ====== -->
+  <div class="panel" data-panel="invest">
+    <div class="alert alert-warn">
+      Sua carteira atual tem 63% em ações com -9,35% de rentabilidade. Para um objetivo com data marcada (12 meses) isso é arriscado: se precisar resgatar em queda, materializa o prejuízo.
+    </div>
+
+    <div class="card">
+      <h3 class="h3">Carteira atual</h3>
+      <table>
+        <thead><tr><th>Ativo</th><th>Tipo</th><th style="text-align:right;">Valor</th><th style="text-align:right;">% carteira</th></tr></thead>
+        <tbody>
+          <tr><td>VULC3</td><td>Ação</td><td style="text-align:right;">R$ 552</td><td style="text-align:right;">31%</td></tr>
+          <tr><td>BBDC3</td><td>Ação</td><td style="text-align:right;">R$ 301</td><td style="text-align:right;">17%</td></tr>
+          <tr><td>BBAS3</td><td>Ação</td><td style="text-align:right;">R$ 111</td><td style="text-align:right;">6%</td></tr>
+          <tr><td>GRND3</td><td>Ação</td><td style="text-align:right;">R$ 105</td><td style="text-align:right;">6%</td></tr>
+          <tr><td>PETR4</td><td>Ação</td><td style="text-align:right;">R$ 49</td><td style="text-align:right;">3%</td></tr>
+          <tr><td>SYNE3</td><td>Ação</td><td style="text-align:right;">R$ 4</td><td style="text-align:right;">0%</td></tr>
+          <tr><td>MXRF11</td><td>FII</td><td style="text-align:right;">R$ 10</td><td style="text-align:right;">1%</td></tr>
+          <tr><td>CDB (vence amanhã)</td><td>RF</td><td style="text-align:right;">R$ 641</td><td style="text-align:right;">36%</td></tr>
+          <tr style="font-weight:500;"><td>Total</td><td></td><td style="text-align:right;">R$ 1.773</td><td style="text-align:right;">100%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3 class="h3">Estratégia recomendada para 12 meses</h3>
+      <p style="font-size:13px;color:var(--text-2);margin:0 0 12px;">Para dinheiro com data marcada, prioridade é <b>preservação + liquidez</b>, não rentabilidade.</p>
+      <div class="chart-wrap" style="height:200px;">
+        <canvas id="grafico-aloc" role="img" aria-label="Alocação recomendada: 70% Tesouro Selic, 20% CDB liquidez, 10% conta"></canvas>
+      </div>
+      <table>
+        <thead><tr><th>Onde</th><th>%</th><th>Por quê</th></tr></thead>
+        <tbody>
+          <tr><td>Tesouro Selic</td><td>70%</td><td>Liquidez D+1, segurança máxima, rende ~Selic</td></tr>
+          <tr><td>CDB liquidez diária 100%+ CDI</td><td>20%</td><td>Nubank, Inter, C6 — para resgate imediato</td></tr>
+          <tr><td>Conta corrente / poupança PT</td><td>10%</td><td>Buffer operacional do mês a mês</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3 class="h3">O que fazer com a carteira atual</h3>
+      <div class="check-item"><input type="checkbox"><span><b>CDB que vence:</b> reinvestir em Tesouro Selic ou CDB liquidez diária</span></div>
+      <div class="check-item"><input type="checkbox"><span><b>Ações + FII (R$ 1.132):</b> avaliar manter como núcleo de longo prazo (continuará após a volta) ou liquidar para acelerar a meta</span></div>
+      <div class="check-item"><input type="checkbox"><span><b>Aportes novos:</b> 100% para renda fixa pós-fixada até a volta</span></div>
+      <div class="check-item"><input type="checkbox"><span><b>Após estabilizar no Brasil:</b> retomar carteira de dividendos com calendário mensal</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============ TABS ============ */
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.querySelector(`[data-panel="${tab.dataset.tab}"]`).classList.add('active');
+    if (tab.dataset.tab === 'cronograma') renderCronograma();
+    if (tab.dataset.tab === 'invest') renderAloc();
+  });
+});
+
+/* ============ FORMATAÇÃO ============ */
+const fmt = v => 'R$ ' + Math.round(v).toLocaleString('pt-BR');
+const fmtEur = v => '€ ' + Math.round(v).toLocaleString('pt-BR');
+
+/* ============ SIMULADOR ============ */
+const SIM_FIELDS = [
+  { key: 'cambio', decimals: 2 },
+  { key: 'mensal', decimals: 0 },
+  { key: 'bonus',  decimals: 0 },
+  { key: 'venda',  decimals: 0 },
+  { key: 'prazo',  decimals: 0 },
+  { key: 'meta',   decimals: 0 }
+];
+
+function getSimValue(key) {
+  return parseFloat(document.getElementById('i-' + key).value) || 0;
+}
+
+function setSimValue(key, value, decimals) {
+  const slider = document.getElementById('s-' + key);
+  const input = document.getElementById('i-' + key);
+  const min = parseFloat(slider.min);
+  const max = parseFloat(slider.max);
+  const clamped = Math.max(min, Math.min(max, value));
+  slider.value = clamped;
+  // No input numérico não limitamos pelo max do slider — o usuário pode digitar livremente
+  // Mas se vier do slider, vai até o max. Aqui sincroniza o input com o que veio.
+  input.value = decimals > 0 ? value.toFixed(decimals) : Math.round(value);
+}
+
+function recalc() {
+  const cambio = getSimValue('cambio');
+  const mensal = getSimValue('mensal');
+  const bonus = getSimValue('bonus');
+  const venda = getSimValue('venda');
+  const prazo = Math.max(1, parseInt(getSimValue('prazo')) || 1);
+  const meta = getSimValue('meta');
+
+  const inicial = 2500;
+  const totalEur = mensal * prazo + bonus + venda;
+  const totalBrl = inicial + totalEur * cambio;
+  const gap = meta - totalBrl;
+
+  document.getElementById('m-meta').textContent = fmt(meta);
+  document.getElementById('m-acum').textContent = fmt(totalBrl);
+  document.getElementById('m-gap').textContent = (gap > 0 ? '-' : '+') + fmt(Math.abs(gap));
+  const sub = document.getElementById('m-gap-sub');
+  if (gap > 0) { sub.textContent = 'falta juntar'; sub.style.color = 'var(--danger-text)'; }
+  else { sub.textContent = 'sobra de capital'; sub.style.color = 'var(--success-text)'; }
+}
+
+// Sincronizar slider → input
+SIM_FIELDS.forEach(({ key, decimals }) => {
+  const slider = document.getElementById('s-' + key);
+  const input = document.getElementById('i-' + key);
+
+  slider.addEventListener('input', () => {
+    const v = parseFloat(slider.value);
+    input.value = decimals > 0 ? v.toFixed(decimals) : Math.round(v);
+    recalc();
+  });
+
+  // Input → slider (sem limitar o input pelo max do slider)
+  input.addEventListener('input', () => {
+    const v = parseFloat(input.value);
+    if (isNaN(v)) return;
+    const min = parseFloat(slider.min);
+    const max = parseFloat(slider.max);
+    slider.value = Math.max(min, Math.min(max, v));
+    recalc();
+  });
+
+  // Ao perder foco, formata o valor digitado
+  input.addEventListener('blur', () => {
+    const v = parseFloat(input.value) || 0;
+    input.value = decimals > 0 ? v.toFixed(decimals) : Math.round(v);
+  });
+});
+
+recalc();
+
+/* ============ CRONOGRAMA ============ */
+let chartCron = null, chartAloc = null;
+function renderCronograma() {
+  const cambio = getSimValue('cambio');
+  const mensal = getSimValue('mensal');
+  const bonus = getSimValue('bonus');
+  const venda = getSimValue('venda');
+  const prazo = Math.max(1, parseInt(getSimValue('prazo')) || 1);
+
+  const labels = [], data = [];
+  let saldo = 2500;
+  const tbody = document.getElementById('tbody-meses');
+  tbody.innerHTML = '';
+  for (let i = 1; i <= prazo; i++) {
+    saldo += mensal * cambio;
+    let acao = 'Aporte mensal regular';
+    if (i === prazo - 1) { saldo += venda * cambio; acao = 'Venda dos móveis em PT'; }
+    if (i === prazo) { saldo += bonus * cambio; acao = 'Bônus + mudança ao Brasil'; }
+    labels.push('M' + i);
+    data.push(Math.round(saldo));
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>M${i}</td><td>${acao}</td><td style="text-align:right;">${fmt(saldo)}</td>`;
+    tbody.appendChild(tr);
+  }
+  if (chartCron) chartCron.destroy();
+  chartCron = new Chart(document.getElementById('grafico-evolucao'), {
+    type: 'line',
+    data: { labels, datasets: [{ label: 'Saldo acumulado', data, borderColor: '#185FA5', backgroundColor: 'rgba(24,95,165,0.08)', fill: true, tension: 0.2, pointRadius: 3, borderWidth: 2 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: v => 'R$ ' + (v / 1000).toFixed(0) + 'k' } } } }
+  });
+}
+
+function renderAloc() {
+  if (chartAloc) chartAloc.destroy();
+  chartAloc = new Chart(document.getElementById('grafico-aloc'), {
+    type: 'bar',
+    data: { labels: ['Tesouro Selic', 'CDB liquidez diária', 'Conta / buffer'], datasets: [{ data: [70, 20, 10], backgroundColor: ['#1D9E75', '#378ADD', '#888780'] }] },
+    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { max: 100, ticks: { callback: v => v + '%' } } } }
+  });
+}
+
+/* ============ LISTA DE COMPRAS ============ */
+const STORAGE_KEY = 'planejamento_volta_brasil_v1';
+
+const LISTA_PADRAO = [
+  // COZINHA
+  { id: 1, comodo: 'Cozinha', item: 'Geladeira frost free duplex', loja: '', link: '', qtd: 1, valor: 2800, prio: 'P1', status: 'Pesquisando' },
+  { id: 2, comodo: 'Cozinha', item: 'Fogão 4 bocas', loja: '', link: '', qtd: 1, valor: 900, prio: 'P1', status: 'Pesquisando' },
+  { id: 3, comodo: 'Cozinha', item: 'Micro-ondas 20L', loja: '', link: '', qtd: 1, valor: 500, prio: 'P2', status: 'Pesquisando' },
+  { id: 4, comodo: 'Cozinha', item: 'Mesa + 4 cadeiras', loja: '', link: '', qtd: 1, valor: 1200, prio: 'P1', status: 'Pesquisando' },
+  { id: 5, comodo: 'Cozinha', item: 'Conjunto de panelas', loja: '', link: '', qtd: 1, valor: 400, prio: 'P1', status: 'Pesquisando' },
+  { id: 6, comodo: 'Cozinha', item: 'Jogo de pratos + talheres + copos', loja: '', link: '', qtd: 1, valor: 350, prio: 'P1', status: 'Pesquisando' },
+  { id: 7, comodo: 'Cozinha', item: 'Liquidificador', loja: '', link: '', qtd: 1, valor: 200, prio: 'P2', status: 'Pesquisando' },
+  { id: 8, comodo: 'Cozinha', item: 'Cafeteira', loja: '', link: '', qtd: 1, valor: 200, prio: 'P2', status: 'Pesquisando' },
+  { id: 9, comodo: 'Cozinha', item: 'Utensílios diversos (escorredor, panos, lixeira)', loja: '', link: '', qtd: 1, valor: 250, prio: 'P2', status: 'Pesquisando' },
+  // QUARTO CASAL
+  { id: 10, comodo: 'Quarto Casal', item: 'Cama box casal + colchão', loja: '', link: '', qtd: 1, valor: 2200, prio: 'P1', status: 'Pesquisando' },
+  { id: 11, comodo: 'Quarto Casal', item: 'Guarda-roupa casal', loja: '', link: '', qtd: 1, valor: 1500, prio: 'P1', status: 'Pesquisando' },
+  { id: 12, comodo: 'Quarto Casal', item: 'Jogo de lençol + travesseiros + edredom', loja: '', link: '', qtd: 1, valor: 400, prio: 'P1', status: 'Pesquisando' },
+  { id: 13, comodo: 'Quarto Casal', item: 'Criado-mudo (par)', loja: '', link: '', qtd: 2, valor: 250, prio: 'P3', status: 'Pesquisando' },
+  // QUARTO FILHO
+  { id: 14, comodo: 'Quarto Filho', item: 'Cama solteiro + colchão', loja: '', link: '', qtd: 1, valor: 1200, prio: 'P1', status: 'Pesquisando' },
+  { id: 15, comodo: 'Quarto Filho', item: 'Guarda-roupa solteiro', loja: '', link: '', qtd: 1, valor: 900, prio: 'P1', status: 'Pesquisando' },
+  { id: 16, comodo: 'Quarto Filho', item: 'Escrivaninha + cadeira de estudo', loja: '', link: '', qtd: 1, valor: 600, prio: 'P2', status: 'Pesquisando' },
+  { id: 17, comodo: 'Quarto Filho', item: 'Jogo de lençol + travesseiro + edredom', loja: '', link: '', qtd: 1, valor: 250, prio: 'P1', status: 'Pesquisando' },
+  // SALA
+  { id: 18, comodo: 'Sala', item: 'Sofá 3 lugares', loja: '', link: '', qtd: 1, valor: 1500, prio: 'P1', status: 'Pesquisando' },
+  { id: 19, comodo: 'Sala', item: 'TV LED 50"', loja: '', link: '', qtd: 1, valor: 2200, prio: 'P2', status: 'Pesquisando' },
+  { id: 20, comodo: 'Sala', item: 'Rack para TV', loja: '', link: '', qtd: 1, valor: 600, prio: 'P2', status: 'Pesquisando' },
+  { id: 21, comodo: 'Sala', item: 'Mesa de centro', loja: '', link: '', qtd: 1, valor: 350, prio: 'P3', status: 'Pesquisando' },
+  // LAVANDERIA
+  { id: 22, comodo: 'Lavanderia', item: 'Máquina de lavar 11kg', loja: '', link: '', qtd: 1, valor: 1800, prio: 'P1', status: 'Pesquisando' },
+  { id: 23, comodo: 'Lavanderia', item: 'Varal de chão', loja: '', link: '', qtd: 1, valor: 120, prio: 'P2', status: 'Pesquisando' },
+  { id: 24, comodo: 'Lavanderia', item: 'Ferro de passar', loja: '', link: '', qtd: 1, valor: 150, prio: 'P2', status: 'Pesquisando' },
+  { id: 25, comodo: 'Lavanderia', item: 'Tábua de passar', loja: '', link: '', qtd: 1, valor: 130, prio: 'P3', status: 'Pesquisando' },
+  // BANHEIRO
+  { id: 26, comodo: 'Banheiro', item: 'Toalhas (banho + rosto, kit)', loja: '', link: '', qtd: 2, valor: 150, prio: 'P1', status: 'Pesquisando' },
+  { id: 27, comodo: 'Banheiro', item: 'Cortina box + barra', loja: '', link: '', qtd: 1, valor: 100, prio: 'P1', status: 'Pesquisando' },
+  { id: 28, comodo: 'Banheiro', item: 'Kit banheiro (lixeira, escova WC, tapete)', loja: '', link: '', qtd: 1, valor: 120, prio: 'P2', status: 'Pesquisando' }
+];
+
+const PRIORIDADES = ['P1', 'P2', 'P3'];
+const STATUS_OPCOES = ['Pesquisando', 'Decidido', 'Comprado'];
+const COMODOS = ['Cozinha', 'Quarto Casal', 'Quarto Filho', 'Sala', 'Lavanderia', 'Banheiro', 'Outros'];
+
+/* ============ SINCRONIZAÇÃO COM GOOGLE SHEETS ============ */
+const API_URL_KEY = 'planejamento_volta_brasil_api_url';
+let API_URL = localStorage.getItem(API_URL_KEY) || '';
+let saveTimeout = null;
+let isSyncing = false;
+
+function setSyncStatus(text, tipo) {
+  const alert = document.getElementById('sync-status-alert');
+  const t = document.getElementById('sync-status-text');
+  if (!alert || !t) return;
+  t.innerHTML = text;
+  alert.className = 'alert ' + (tipo === 'erro' ? 'alert-danger' : tipo === 'ok' ? 'alert-success' : tipo === 'sync' ? 'alert-warn' : 'alert-info');
+}
+
+function configurarAPI() {
+  const atual = API_URL || '';
+  const url = prompt('Cole a URL da API do Google Apps Script:\n\n(Para desativar a sincronização, deixe em branco)', atual);
+  if (url === null) return;
+  API_URL = url.trim();
+  if (API_URL) {
+    localStorage.setItem(API_URL_KEY, API_URL);
+    setSyncStatus('☁️ API configurada. Carregando dados da nuvem...', 'sync');
+    recarregarDaNuvem();
+  } else {
+    localStorage.removeItem(API_URL_KEY);
+    setSyncStatus('⚙️ Sincronização desativada. Os dados ficam apenas neste navegador.', 'info');
+  }
+}
+
+async function recarregarDaNuvem() {
+  if (!API_URL) {
+    setSyncStatus('⚙️ Configure a URL da API do Google Sheets para sincronizar entre dispositivos. <button onclick="configurarAPI()">Configurar API</button>', 'info');
+    return;
+  }
+  try {
+    setSyncStatus('↻ Buscando dados da nuvem...', 'sync');
+    const res = await fetch(API_URL);
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Resposta inválida');
+    const items = (data.items || []).map(it => ({
+      id: parseInt(it.id) || 0,
+      comodo: String(it.comodo || ''),
+      item: String(it.item || ''),
+      loja: String(it.loja || ''),
+      link: String(it.link || ''),
+      qtd: parseFloat(it.qtd) || 1,
+      valor: parseFloat(it.valor) || 0,
+      prio: String(it.prio || 'P2'),
+      status: String(it.status || 'Pesquisando')
+    }));
+    lista = items;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
+    renderLista();
+    setSyncStatus('☁️ Sincronizado com Google Sheets · ' + items.length + ' itens carregados', 'ok');
+  } catch (e) {
+    console.error(e);
+    setSyncStatus('⚠️ Erro ao buscar da nuvem: ' + e.message + '. Usando dados locais. <button onclick="configurarAPI()">Reconfigurar</button>', 'erro');
+  }
+}
+
+async function salvarNaNuvem() {
+  if (!API_URL || isSyncing) return;
+  isSyncing = true;
+  try {
+    setSyncStatus('↻ Salvando na nuvem...', 'sync');
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      // Apps Script requer text/plain ou form-data para evitar preflight CORS
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'save_all', items: lista })
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Falha ao salvar');
+    setSyncStatus('☁️ Sincronizado com Google Sheets · última atualização agora', 'ok');
+  } catch (e) {
+    console.error(e);
+    setSyncStatus('⚠️ Erro ao salvar na nuvem: ' + e.message + '. Salvo localmente. <button onclick="recarregarDaNuvem()">Tentar novamente</button>', 'erro');
+  } finally {
+    isSyncing = false;
+  }
+}
+
+/* Agenda salvamento com debounce de 1.5s para não floodar a API */
+function agendarSalvarNuvem() {
+  if (!API_URL) return;
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(salvarNaNuvem, 1500);
+}
+
+let lista = carregarLista();
+
+function carregarLista() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch (e) { console.error('Erro ao carregar:', e); }
+  return JSON.parse(JSON.stringify(LISTA_PADRAO));
+}
+
+function salvarLista() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
+    const ind = document.getElementById('saved-indicator');
+    ind.classList.add('show');
+    setTimeout(() => ind.classList.remove('show'), 1200);
+  } catch (e) { console.error('Erro ao salvar:', e); }
+  agendarSalvarNuvem();
+}
+
+function nextId() {
+  return lista.length ? Math.max(...lista.map(i => i.id)) + 1 : 1;
+}
+
+function renderLista() {
+  const container = document.getElementById('rooms-container');
+  container.innerHTML = '';
+
+  COMODOS.forEach(comodo => {
+    const items = lista.filter(i => i.comodo === comodo);
+    if (items.length === 0 && comodo === 'Outros') return;
+
+    const totalComodo = items.reduce((s, i) => s + (i.qtd || 1) * (i.valor || 0), 0);
+
+    const section = document.createElement('div');
+    section.className = 'room-section card';
+    section.innerHTML = `
+      <div class="room-header">
+        <h3 class="room-title">${comodo}</h3>
+        <span class="room-total">${fmt(totalComodo)} · ${items.length} itens</span>
+      </div>
+      <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th class="col-item">Item</th>
+            <th class="col-loja">Loja</th>
+            <th class="col-link">Link</th>
+            <th class="col-qtd">Qtd</th>
+            <th class="col-valor">Valor un.</th>
+            <th class="col-total">Total</th>
+            <th class="col-prio">Prio</th>
+            <th class="col-status">Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody class="items-tbody"></tbody>
+      </table>
+      </div>
+      <button class="add-btn" data-comodo="${comodo}">+ Adicionar item em ${comodo}</button>
+    `;
+    container.appendChild(section);
+
+    const tbody = section.querySelector('.items-tbody');
+    items.forEach(it => tbody.appendChild(renderItemRow(it)));
+    section.querySelector('.add-btn').addEventListener('click', () => {
+      lista.push({ id: nextId(), comodo, item: '', loja: '', link: '', qtd: 1, valor: 0, prio: 'P2', status: 'Pesquisando' });
+      salvarLista();
+      renderLista();
+      atualizarSumario();
+    });
+  });
+
+  atualizarSumario();
+}
+
+function renderItemRow(it) {
+  const tr = document.createElement('tr');
+  tr.className = 'item-row';
+  const total = (it.qtd || 1) * (it.valor || 0);
+  const linkValido = it.link && it.link.length > 5;
+  tr.innerHTML = `
+    <td class="col-item"><input type="text" value="${escapeHtml(it.item)}" placeholder="Nome do item" data-field="item"></td>
+    <td class="col-loja"><input type="text" value="${escapeHtml(it.loja)}" placeholder="Loja" data-field="loja"></td>
+    <td class="col-link">
+      ${linkValido ? `<a href="${escapeHtml(it.link)}" target="_blank" class="link-btn">Abrir ↗</a>` : ''}
+      <input type="url" value="${escapeHtml(it.link)}" placeholder="https://..." data-field="link" style="margin-top:4px;">
+    </td>
+    <td class="col-qtd"><input type="number" value="${it.qtd}" min="1" data-field="qtd"></td>
+    <td class="col-valor"><input type="number" value="${it.valor}" min="0" step="0.01" data-field="valor"></td>
+    <td class="col-total"><strong>${fmt(total)}</strong></td>
+    <td class="col-prio">
+      <select data-field="prio">
+        ${PRIORIDADES.map(p => `<option value="${p}" ${p === it.prio ? 'selected' : ''}>${p}</option>`).join('')}
+      </select>
+    </td>
+    <td class="col-status">
+      <select data-field="status">
+        ${STATUS_OPCOES.map(s => `<option value="${s}" ${s === it.status ? 'selected' : ''}>${s}</option>`).join('')}
+      </select>
+    </td>
+    <td><button class="del-btn" title="Remover">✕</button></td>
+  `;
+  tr.querySelectorAll('input, select').forEach(el => {
+    el.addEventListener('change', () => atualizarItem(it.id, el.dataset.field, el.type === 'number' ? parseFloat(el.value) || 0 : el.value));
+    el.addEventListener('input', () => atualizarItem(it.id, el.dataset.field, el.type === 'number' ? parseFloat(el.value) || 0 : el.value, true));
+  });
+  tr.querySelector('.del-btn').addEventListener('click', () => {
+    if (confirm('Remover este item?')) {
+      lista = lista.filter(i => i.id !== it.id);
+      salvarLista();
+      renderLista();
+    }
+  });
+  return tr;
+}
+
+function atualizarItem(id, campo, valor, parcial = false) {
+  const it = lista.find(i => i.id === id);
+  if (!it) return;
+  it[campo] = valor;
+  salvarLista();
+  if (!parcial) renderLista();
+  else atualizarSumario();
+}
+
+function atualizarSumario() {
+  const total = lista.reduce((s, i) => s + (i.qtd || 1) * (i.valor || 0), 0);
+  const comprados = lista.filter(i => i.status === 'Comprado');
+  const compradosVal = comprados.reduce((s, i) => s + (i.qtd || 1) * (i.valor || 0), 0);
+  const falta = total - compradosVal;
+
+  document.getElementById('sum-total').textContent = fmt(total);
+  document.getElementById('sum-itens').textContent = lista.length;
+  document.getElementById('sum-comprados').textContent = `${comprados.length} (${fmt(compradosVal)})`;
+  document.getElementById('sum-falta').textContent = fmt(falta);
+
+  const prioTbody = document.getElementById('prio-summary');
+  prioTbody.innerHTML = '';
+  PRIORIDADES.forEach(p => {
+    const items = lista.filter(i => i.prio === p);
+    const tot = items.reduce((s, i) => s + (i.qtd || 1) * (i.valor || 0), 0);
+    const label = p === 'P1' ? 'P1 — Essencial' : p === 'P2' ? 'P2 — Importante' : 'P3 — Desejável';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><span class="pill pill-${p.toLowerCase()}">${label}</span></td><td style="text-align:right;">${items.length}</td><td style="text-align:right;">${fmt(tot)}</td>`;
+    prioTbody.appendChild(tr);
+  });
+}
+
+function escapeHtml(s) {
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function exportJSON() {
+  const data = JSON.stringify(lista, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const date = new Date().toISOString().slice(0, 10);
+  a.download = `lista-compras-volta-brasil-${date}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (!Array.isArray(imported)) throw new Error('JSON inválido');
+      if (confirm(`Importar ${imported.length} itens? Isso substitui a lista atual.`)) {
+        lista = imported;
+        salvarLista();
+        renderLista();
+      }
+    } catch (err) {
+      alert('Erro ao importar: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function exportCSV() {
+  const headers = ['Cômodo', 'Item', 'Loja', 'Link', 'Quantidade', 'Valor unitário', 'Total', 'Prioridade', 'Status'];
+  const rows = lista.map(i => [
+    i.comodo, i.item, i.loja, i.link,
+    i.qtd, i.valor, (i.qtd || 1) * (i.valor || 0),
+    i.prio, i.status
+  ]);
+  const csv = [headers, ...rows]
+    .map(r => r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(','))
+    .join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const date = new Date().toISOString().slice(0, 10);
+  a.download = `lista-compras-volta-brasil-${date}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function resetLista() {
+  if (confirm('Restaurar a lista padrão? Isso apaga TODAS as suas alterações. Considere exportar antes.')) {
+    lista = JSON.parse(JSON.stringify(LISTA_PADRAO));
+    salvarLista();
+    renderLista();
+  }
+}
+
+renderLista();
+
+/* Ao abrir, se houver API configurada, busca automaticamente da nuvem */
+if (API_URL) {
+  setSyncStatus('☁️ API configurada · carregando dados da nuvem...', 'sync');
+  recarregarDaNuvem();
+} else {
+  setSyncStatus('⚙️ Configure a URL da API do Google Sheets para sincronizar entre dispositivos. <button onclick="configurarAPI()">Configurar API</button>', 'info');
+}
+</script>
+</body>
+</html>
