@@ -296,6 +296,31 @@
     -webkit-appearance: none;
     margin: 0;
   }
+  .sub-tab {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 8px 12px;
+    font-size: 13px;
+    color: var(--text-2);
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .sub-tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    font-weight: 500;
+  }
+  .sub-panel { display: none; }
+  .sub-panel.active { display: block; }
+  .star-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 0 4px;
+  }
+  .impressora-row.favorita { background: var(--success-bg); }
 </style>
 </head>
 <body>
@@ -310,6 +335,7 @@
     <button class="tab" data-tab="cronograma">Cronograma</button>
     <button class="tab" data-tab="checklist">Checklist</button>
     <button class="tab" data-tab="lista">Lista de compras</button>
+    <button class="tab" data-tab="impressao3d">Impressão 3D</button>
     <button class="tab" data-tab="invest">Investimentos</button>
   </div>
 
@@ -496,6 +522,269 @@
     </div>
 
     <div id="rooms-container"></div>
+  </div>
+
+  <!-- ====== IMPRESSÃO 3D ====== -->
+  <div class="panel" data-panel="impressao3d">
+    <div class="alert alert-info">
+      Estudo + planejamento da impressora 3D para renda extra no Brasil. Comparador, calculadora de custo e simulador de ROI.
+    </div>
+
+    <!-- Sub-abas internas -->
+    <div class="tabs" style="margin-bottom: 16px;">
+      <button class="sub-tab active" data-subtab="modelos">Modelos</button>
+      <button class="sub-tab" data-subtab="filamentos">Filamentos / Resinas</button>
+      <button class="sub-tab" data-subtab="calc">Calculadora</button>
+      <button class="sub-tab" data-subtab="roi">ROI</button>
+      <button class="sub-tab" data-subtab="estudos">Estudos</button>
+    </div>
+
+    <!-- MODELOS -->
+    <div class="sub-panel active" data-subpanel="modelos">
+      <div class="card">
+        <h3 class="h3">Comparador de impressoras</h3>
+        <p style="font-size:12px;color:var(--text-3);margin:0 0 12px;">Edite os preços conforme pesquisa. Marque sua favorita ⭐.</p>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:18%;">Modelo</th>
+                <th style="width:8%;">Tipo</th>
+                <th style="width:12%;">Preço (R$)</th>
+                <th style="width:14%;">Volume (mm)</th>
+                <th style="width:10%;">Velocidade</th>
+                <th style="width:8%;">Link</th>
+                <th style="width:20%;">Notas</th>
+                <th style="width:6%;">⭐</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="impressoras-tbody"></tbody>
+          </table>
+        </div>
+        <button class="add-btn" onclick="adicionarImpressora()">+ Adicionar modelo</button>
+      </div>
+    </div>
+
+    <!-- FILAMENTOS -->
+    <div class="sub-panel" data-subpanel="filamentos">
+      <div class="card">
+        <h3 class="h3">Catálogo de filamentos e resinas</h3>
+        <p style="font-size:12px;color:var(--text-3);margin:0 0 12px;">Base de preços usada na calculadora. Pesquise no 3DLab, FilamentoBR, Mercado Livre.</p>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:12%;">Tipo</th>
+                <th style="width:18%;">Marca</th>
+                <th style="width:14%;">Preço (R$)</th>
+                <th style="width:12%;">Unidade</th>
+                <th style="width:10%;">Link</th>
+                <th style="width:28%;">Uso recomendado</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="filamentos-tbody"></tbody>
+          </table>
+        </div>
+        <button class="add-btn" onclick="adicionarFilamento()">+ Adicionar filamento/resina</button>
+      </div>
+    </div>
+
+    <!-- CALCULADORA -->
+    <div class="sub-panel" data-subpanel="calc">
+      <div class="card">
+        <h3 class="h3">Calculadora de custo por peça</h3>
+        <p style="font-size:12px;color:var(--text-3);margin:0 0 14px;">Estime o custo real e o preço de venda recomendado para cada peça.</p>
+
+        <div class="row">
+          <label>Material usado</label>
+          <select id="calc-material" style="flex:1;"></select>
+          <span class="sim-out"><span class="prefix">R$</span><span id="calc-mat-preco" style="min-width:60px;text-align:right;">0,00</span><span class="suffix">/un</span></span>
+        </div>
+
+        <div class="row">
+          <label>Peso da peça (g)</label>
+          <input type="range" id="calc-peso" min="1" max="500" step="1" value="50">
+          <span class="sim-out"><input type="number" id="i-calc-peso" min="0" step="1" value="50"><span class="suffix">g</span></span>
+        </div>
+
+        <div class="row">
+          <label>Tempo de impressão (h)</label>
+          <input type="range" id="calc-tempo" min="0.5" max="48" step="0.5" value="4">
+          <span class="sim-out"><input type="number" id="i-calc-tempo" min="0" step="0.5" value="4"><span class="suffix">h</span></span>
+        </div>
+
+        <div class="row">
+          <label>Consumo impressora (W)</label>
+          <input type="range" id="calc-watts" min="50" max="500" step="10" value="120">
+          <span class="sim-out"><input type="number" id="i-calc-watts" min="0" step="10" value="120"><span class="suffix">W</span></span>
+        </div>
+
+        <div class="row">
+          <label>Tarifa energia (R$/kWh)</label>
+          <input type="range" id="calc-energia" min="0.4" max="1.5" step="0.01" value="0.85">
+          <span class="sim-out"><span class="prefix">R$</span><input type="number" id="i-calc-energia" min="0" step="0.01" value="0.85"></span>
+        </div>
+
+        <div class="row">
+          <label>Taxa de falha (%)</label>
+          <input type="range" id="calc-falha" min="0" max="30" step="1" value="10">
+          <span class="sim-out"><input type="number" id="i-calc-falha" min="0" step="1" value="10"><span class="suffix">%</span></span>
+        </div>
+
+        <div class="row">
+          <label>Depreciação por hora (R$)</label>
+          <input type="range" id="calc-depr" min="0" max="3" step="0.05" value="0.50">
+          <span class="sim-out"><span class="prefix">R$</span><input type="number" id="i-calc-depr" min="0" step="0.05" value="0.50"><span class="suffix">/h</span></span>
+        </div>
+
+        <div class="row">
+          <label>Margem de lucro (%)</label>
+          <input type="range" id="calc-margem" min="50" max="500" step="10" value="200">
+          <span class="sim-out"><input type="number" id="i-calc-margem" min="0" step="10" value="200"><span class="suffix">%</span></span>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div class="metric">
+          <p class="metric-label">Custo de material</p>
+          <p class="metric-value" id="r-custo-mat">R$ 0,00</p>
+        </div>
+        <div class="metric">
+          <p class="metric-label">Custo de energia</p>
+          <p class="metric-value" id="r-custo-energia">R$ 0,00</p>
+        </div>
+        <div class="metric">
+          <p class="metric-label">Custo total (com falha + deprec.)</p>
+          <p class="metric-value" id="r-custo-total">R$ 0,00</p>
+        </div>
+      </div>
+
+      <div class="card" style="background: var(--success-bg); border-color: var(--success-text);">
+        <h3 class="h3" style="color: var(--success-text);">Preço de venda sugerido</h3>
+        <p class="metric-value" style="color: var(--success-text); font-size: 32px; margin: 8px 0;" id="r-preco-venda">R$ 0,00</p>
+        <p style="font-size: 12px; color: var(--success-text); margin: 0;" id="r-lucro-info">Lucro por peça: R$ 0,00 · Lucro/hora: R$ 0,00</p>
+      </div>
+    </div>
+
+    <!-- ROI -->
+    <div class="sub-panel" data-subpanel="roi">
+      <div class="card">
+        <h3 class="h3">Simulador de ROI (Retorno do investimento)</h3>
+        <p style="font-size:12px;color:var(--text-3);margin:0 0 14px;">Quanto tempo até a impressora se pagar? Vale o investimento?</p>
+
+        <div class="row">
+          <label>Investimento inicial (R$)</label>
+          <input type="range" id="roi-invest" min="2000" max="15000" step="100" value="4500">
+          <span class="sim-out"><span class="prefix">R$</span><input type="number" id="i-roi-invest" min="0" step="100" value="4500"></span>
+        </div>
+        <p style="font-size:11px;color:var(--text-3);margin:-4px 0 12px 130px;">Inclui: impressora + acessórios + estoque inicial de filamento</p>
+
+        <div class="row">
+          <label>Preço médio por peça (R$)</label>
+          <input type="range" id="roi-preco" min="10" max="300" step="5" value="60">
+          <span class="sim-out"><span class="prefix">R$</span><input type="number" id="i-roi-preco" min="0" step="5" value="60"></span>
+        </div>
+
+        <div class="row">
+          <label>Custo médio por peça (R$)</label>
+          <input type="range" id="roi-custo" min="2" max="100" step="1" value="15">
+          <span class="sim-out"><span class="prefix">R$</span><input type="number" id="i-roi-custo" min="0" step="1" value="15"></span>
+        </div>
+
+        <div class="row">
+          <label>Peças vendidas/mês</label>
+          <input type="range" id="roi-pecas" min="1" max="100" step="1" value="20">
+          <span class="sim-out"><input type="number" id="i-roi-pecas" min="0" step="1" value="20"><span class="suffix">un</span></span>
+        </div>
+
+        <div class="row">
+          <label>Custos fixos/mês (R$)</label>
+          <input type="range" id="roi-fixos" min="0" max="500" step="10" value="80">
+          <span class="sim-out"><span class="prefix">R$</span><input type="number" id="i-roi-fixos" min="0" step="10" value="80"></span>
+        </div>
+        <p style="font-size:11px;color:var(--text-3);margin:-4px 0 12px 130px;">Energia, marketing, anúncios MEI, etc</p>
+      </div>
+
+      <div class="grid-3">
+        <div class="metric">
+          <p class="metric-label">Receita mensal</p>
+          <p class="metric-value" id="roi-receita">R$ 0</p>
+        </div>
+        <div class="metric">
+          <p class="metric-label">Lucro mensal líquido</p>
+          <p class="metric-value" id="roi-lucro">R$ 0</p>
+        </div>
+        <div class="metric">
+          <p class="metric-label">Payback</p>
+          <p class="metric-value" id="roi-payback">— meses</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="h3">Evolução do retorno (24 meses)</h3>
+        <div class="chart-wrap">
+          <canvas id="grafico-roi" role="img" aria-label="Gráfico de evolução do retorno acumulado"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- ESTUDOS -->
+    <div class="sub-panel" data-subpanel="estudos">
+      <div class="card">
+        <h3 class="h3">📺 Canais YouTube recomendados</h3>
+        <div class="check-item"><input type="checkbox"><span><a href="https://www.youtube.com/@MakersMuse" target="_blank">Maker's Muse</a> — reviews honestos, tutoriais avançados (EN)</span></div>
+        <div class="check-item"><input type="checkbox"><span><a href="https://www.youtube.com/@CHEP" target="_blank">CHEP</a> — Cura, slicing, troubleshooting (EN)</span></div>
+        <div class="check-item"><input type="checkbox"><span><a href="https://www.youtube.com/@TomsBasement" target="_blank">Tom's Basement</a> — projetos práticos (EN)</span></div>
+        <div class="check-item"><input type="checkbox"><span><a href="https://www.youtube.com/@brincandocom3D" target="_blank">Brincando com 3D</a> — canal brasileiro, dicas e reviews (PT)</span></div>
+        <div class="check-item"><input type="checkbox"><span><a href="https://www.youtube.com/@cliever3d" target="_blank">Cliever 3D</a> — fabricante brasileiro, conteúdo técnico (PT)</span></div>
+      </div>
+
+      <div class="card">
+        <h3 class="h3">🛠️ Software essencial</h3>
+        <div class="check-item"><input type="checkbox"><span><b>Bambu Studio</b> — slicer (preparar arquivos para impressão), gratuito</span></div>
+        <div class="check-item"><input type="checkbox"><span><b>PrusaSlicer</b> — alternativa robusta, gratuito</span></div>
+        <div class="check-item"><input type="checkbox"><span><b>Cura</b> — slicer mais usado mundialmente, gratuito</span></div>
+        <div class="check-item"><input type="checkbox"><span><b>Tinkercad</b> — modelagem 3D para iniciantes, online e gratuito</span></div>
+        <div class="check-item"><input type="checkbox"><span><b>Fusion 360</b> — modelagem profissional, gratuito para uso pessoal</span></div>
+        <div class="check-item"><input type="checkbox"><span><b>Blender</b> — modelagem orgânica/artística, gratuito</span></div>
+      </div>
+
+      <div class="card">
+        <h3 class="h3">🌐 Marketplaces de modelos (vender e baixar)</h3>
+        <div class="check-item"><input type="checkbox"><span><a href="https://www.printables.com" target="_blank">Printables</a> — gratuito, comunidade ativa (Prusa)</span></div>
+        <div class="check-item"><input type="checkbox"><span><a href="https://www.thingiverse.com" target="_blank">Thingiverse</a> — clássico, modelos gratuitos</span></div>
+        <div class="check-item"><input type="checkbox"><span><a href="https://cults3d.com" target="_blank">Cults3D</a> — vender modelos pagos, ótima curadoria</span></div>
+        <div class="check-item"><input type="checkbox"><span><a href="https://www.myminifactory.com" target="_blank">MyMiniFactory</a> — miniaturas, RPG, board games</span></div>
+        <div class="check-item"><input type="checkbox"><span><a href="https://makerworld.com" target="_blank">MakerWorld</a> — Bambu Lab, com sistema de pontos pagos</span></div>
+      </div>
+
+      <div class="card">
+        <h3 class="h3">💰 Onde vender peças impressas no Brasil</h3>
+        <div class="check-item"><input type="checkbox"><span><b>Mercado Livre</b> — alcance nacional, taxa ~16%</span></div>
+        <div class="check-item"><input type="checkbox"><span><b>Shopee</b> — bom para peças baratas/popular</span></div>
+        <div class="check-item"><input type="checkbox"><span><b>Instagram + WhatsApp</b> — clientes locais, sem taxa</span></div>
+        <div class="check-item"><input type="checkbox"><span><b>OLX local</b> — ideal para cidade do interior</span></div>
+        <div class="check-item"><input type="checkbox"><span><b>Etsy</b> — mercado internacional, peças únicas/artísticas</span></div>
+        <div class="check-item"><input type="checkbox"><span><b>Elo7</b> — handmade brasileiro, peças decorativas</span></div>
+      </div>
+
+      <div class="card">
+        <h3 class="h3">📋 Roadmap de aprendizado sugerido</h3>
+        <div class="check-item"><input type="checkbox"><span><b>Fase 1 (mês 1-2):</b> entender FDM vs Resina, ver vídeos sobre slicing</span></div>
+        <div class="check-item"><input type="checkbox"><span><b>Fase 2 (mês 2-3):</b> aprender Tinkercad ou Fusion 360 (básico)</span></div>
+        <div class="check-item"><input type="checkbox"><span><b>Fase 3 (mês 3-4):</b> baixar modelos do Printables, simular slicing no Bambu Studio</span></div>
+        <div class="check-item"><input type="checkbox"><span><b>Fase 4 (mês 4-6):</b> escolher modelo, comprar ao chegar no Brasil</span></div>
+        <div class="check-item"><input type="checkbox"><span><b>Fase 5 (após chegar):</b> primeiras impressões, calibração, encontrar nicho local</span></div>
+        <div class="check-item"><input type="checkbox"><span><b>Fase 6:</b> abrir MEI (~R$ 80/mês), criar conta vendedor MercadoLivre/Shopee</span></div>
+      </div>
+
+      <div class="card">
+        <h3 class="h3">📝 Notas e observações pessoais</h3>
+        <textarea id="notas-3d" rows="6" style="width:100%;font-family:inherit;font-size:13px;padding:8px;" placeholder="Anote ideias, modelos que viu, dúvidas, links interessantes, contatos..."></textarea>
+      </div>
+    </div>
   </div>
 
   <!-- ====== INVESTIMENTOS ====== -->
@@ -1040,6 +1329,368 @@ if (API_URL) {
 } else {
   setSyncStatus('⚙️ Configure a URL da API do Google Sheets para sincronizar entre dispositivos. <button onclick="configurarAPI()">Configurar API</button>', 'info');
 }
+
+/* ============================================ */
+/* ============ ABA IMPRESSÃO 3D ============== */
+/* ============================================ */
+
+const KEY_IMPRESSORAS = 'volta_brasil_3d_impressoras';
+const KEY_FILAMENTOS = 'volta_brasil_3d_filamentos';
+const KEY_NOTAS_3D = 'volta_brasil_3d_notas';
+
+const IMPRESSORAS_PADRAO = [
+  { id: 1, modelo: 'Bambu Lab A1', tipo: 'FDM', preco: 3300, volume: '256x256x256', velocidade: '500 mm/s', link: 'https://br.store.bambulab.com', notas: 'Top entrada-intermediária. AMS Lite (multi-cor). Excelente para iniciantes.', favorita: true },
+  { id: 2, modelo: 'Bambu Lab A1 Mini', tipo: 'FDM', preco: 2400, volume: '180x180x180', velocidade: '500 mm/s', link: 'https://br.store.bambulab.com', notas: 'Versão menor da A1. Ótimo custo-benefício para começar.', favorita: false },
+  { id: 3, modelo: 'Creality Ender 3 V3 KE', tipo: 'FDM', preco: 2100, volume: '220x220x240', velocidade: '500 mm/s', link: '', notas: 'Boa entrada. Comunidade enorme. Requer mais ajustes.', favorita: false },
+  { id: 4, modelo: 'Elegoo Neptune 4 Pro', tipo: 'FDM', preco: 2800, volume: '225x225x265', velocidade: '500 mm/s', link: '', notas: 'Velocidade boa, qualidade decente. Concorrente direto da Bambu.', favorita: false },
+  { id: 5, modelo: 'Anycubic Kobra 2 Pro', tipo: 'FDM', preco: 2500, volume: '220x220x250', velocidade: '500 mm/s', link: '', notas: 'Auto-leveling, fácil de usar. Boa para iniciantes.', favorita: false },
+  { id: 6, modelo: 'Elegoo Saturn 4 Ultra', tipo: 'Resina', preco: 3500, volume: '218x123x220', velocidade: '150 mm/h', link: '', notas: 'Resina top. Miniaturas, RPG. Cuidado: tóxico, requer ventilação.', favorita: false },
+  { id: 7, modelo: 'Anycubic Photon Mono M5s', tipo: 'Resina', preco: 3200, volume: '218x123x200', velocidade: '105 mm/h', link: '', notas: 'Concorrente da Saturn. 12K resolução. Detalhes excelentes.', favorita: false }
+];
+
+const FILAMENTOS_PADRAO = [
+  { id: 1, tipo: 'PLA', marca: '3DLab Premium', preco: 110, unidade: 'kg', link: 'https://www.3dlab.com.br', uso: 'Uso geral, fácil impressão. 90% das peças.' },
+  { id: 2, tipo: 'PLA+', marca: 'eSun PLA+', preco: 130, unidade: 'kg', link: '', uso: 'Mais resistente que PLA comum, ainda fácil.' },
+  { id: 3, tipo: 'PETG', marca: 'GTMax3D', preco: 130, unidade: 'kg', link: '', uso: 'Resistente a calor/UV, bom para peças externas.' },
+  { id: 4, tipo: 'ABS', marca: '3DLab', preco: 120, unidade: 'kg', link: '', uso: 'Resistente, mas requer câmara fechada. Cheiro forte.' },
+  { id: 5, tipo: 'TPU (flexível)', marca: 'Voolt 3D', preco: 180, unidade: 'kg', link: '', uso: 'Borracha. Cases, suportes flexíveis. Difícil de imprimir.' },
+  { id: 6, tipo: 'Resina padrão', marca: 'Anycubic Standard', preco: 220, unidade: 'L', link: '', uso: 'Resina genérica para miniaturas.' },
+  { id: 7, tipo: 'Resina ABS-like', marca: 'Elegoo ABS-Like', preco: 280, unidade: 'L', link: '', uso: 'Mais resistente, menos quebradiça.' }
+];
+
+let impressoras = JSON.parse(localStorage.getItem(KEY_IMPRESSORAS) || 'null') || JSON.parse(JSON.stringify(IMPRESSORAS_PADRAO));
+let filamentos = JSON.parse(localStorage.getItem(KEY_FILAMENTOS) || 'null') || JSON.parse(JSON.stringify(FILAMENTOS_PADRAO));
+
+function salvarImpressoras() {
+  localStorage.setItem(KEY_IMPRESSORAS, JSON.stringify(impressoras));
+}
+function salvarFilamentos() {
+  localStorage.setItem(KEY_FILAMENTOS, JSON.stringify(filamentos));
+}
+
+/* ===== Sub-tabs ===== */
+document.querySelectorAll('.sub-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.sub-panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.querySelector(`[data-subpanel="${tab.dataset.subtab}"]`).classList.add('active');
+    if (tab.dataset.subtab === 'roi') renderROI();
+    if (tab.dataset.subtab === 'calc') atualizarMaterialOptions();
+  });
+});
+
+/* ===== Modelos ===== */
+function renderImpressoras() {
+  const tbody = document.getElementById('impressoras-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  impressoras.forEach(imp => {
+    const tr = document.createElement('tr');
+    tr.className = 'item-row impressora-row' + (imp.favorita ? ' favorita' : '');
+    const linkValido = imp.link && imp.link.length > 5;
+    tr.innerHTML = `
+      <td><input type="text" value="${escapeHtml(imp.modelo)}" data-field="modelo"></td>
+      <td>
+        <select data-field="tipo">
+          <option value="FDM" ${imp.tipo === 'FDM' ? 'selected' : ''}>FDM</option>
+          <option value="Resina" ${imp.tipo === 'Resina' ? 'selected' : ''}>Resina</option>
+        </select>
+      </td>
+      <td><input type="number" value="${imp.preco}" min="0" step="50" data-field="preco"></td>
+      <td><input type="text" value="${escapeHtml(imp.volume)}" data-field="volume"></td>
+      <td><input type="text" value="${escapeHtml(imp.velocidade)}" data-field="velocidade"></td>
+      <td>
+        ${linkValido ? `<a href="${escapeHtml(imp.link)}" target="_blank" class="link-btn">↗</a>` : ''}
+        <input type="url" value="${escapeHtml(imp.link)}" placeholder="https://" data-field="link" style="margin-top:4px;">
+      </td>
+      <td><input type="text" value="${escapeHtml(imp.notas)}" data-field="notas"></td>
+      <td style="text-align:center;"><button class="star-btn" data-fav="${imp.id}">${imp.favorita ? '⭐' : '☆'}</button></td>
+      <td><button class="del-btn" data-del="${imp.id}">✕</button></td>
+    `;
+    tr.querySelectorAll('input, select').forEach(el => {
+      if (el.classList.contains('star-btn')) return;
+      el.addEventListener('change', () => atualizarImpressora(imp.id, el.dataset.field, el.type === 'number' ? parseFloat(el.value) || 0 : el.value));
+    });
+    tr.querySelector('.star-btn').addEventListener('click', () => toggleFavorita(imp.id));
+    tr.querySelector('.del-btn').addEventListener('click', () => removerImpressora(imp.id));
+    tbody.appendChild(tr);
+  });
+}
+
+function atualizarImpressora(id, campo, valor) {
+  const imp = impressoras.find(i => i.id === id);
+  if (!imp) return;
+  imp[campo] = valor;
+  salvarImpressoras();
+}
+
+function toggleFavorita(id) {
+  impressoras.forEach(i => { if (i.id === id) i.favorita = !i.favorita; });
+  salvarImpressoras();
+  renderImpressoras();
+}
+
+function adicionarImpressora() {
+  const novoId = impressoras.length ? Math.max(...impressoras.map(i => i.id)) + 1 : 1;
+  impressoras.push({ id: novoId, modelo: '', tipo: 'FDM', preco: 0, volume: '', velocidade: '', link: '', notas: '', favorita: false });
+  salvarImpressoras();
+  renderImpressoras();
+}
+
+function removerImpressora(id) {
+  if (confirm('Remover este modelo?')) {
+    impressoras = impressoras.filter(i => i.id !== id);
+    salvarImpressoras();
+    renderImpressoras();
+  }
+}
+
+/* ===== Filamentos ===== */
+function renderFilamentos() {
+  const tbody = document.getElementById('filamentos-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  filamentos.forEach(f => {
+    const tr = document.createElement('tr');
+    tr.className = 'item-row';
+    const linkValido = f.link && f.link.length > 5;
+    tr.innerHTML = `
+      <td><input type="text" value="${escapeHtml(f.tipo)}" data-field="tipo"></td>
+      <td><input type="text" value="${escapeHtml(f.marca)}" data-field="marca"></td>
+      <td><input type="number" value="${f.preco}" min="0" step="5" data-field="preco"></td>
+      <td>
+        <select data-field="unidade">
+          <option value="kg" ${f.unidade === 'kg' ? 'selected' : ''}>kg</option>
+          <option value="L" ${f.unidade === 'L' ? 'selected' : ''}>L (resina)</option>
+        </select>
+      </td>
+      <td>
+        ${linkValido ? `<a href="${escapeHtml(f.link)}" target="_blank" class="link-btn">↗</a>` : ''}
+        <input type="url" value="${escapeHtml(f.link)}" placeholder="https://" data-field="link" style="margin-top:4px;">
+      </td>
+      <td><input type="text" value="${escapeHtml(f.uso)}" data-field="uso"></td>
+      <td><button class="del-btn" data-del="${f.id}">✕</button></td>
+    `;
+    tr.querySelectorAll('input, select').forEach(el => {
+      el.addEventListener('change', () => {
+        const fil = filamentos.find(x => x.id === f.id);
+        if (!fil) return;
+        fil[el.dataset.field] = el.type === 'number' ? parseFloat(el.value) || 0 : el.value;
+        salvarFilamentos();
+        atualizarMaterialOptions();
+      });
+    });
+    tr.querySelector('.del-btn').addEventListener('click', () => {
+      if (confirm('Remover este item?')) {
+        filamentos = filamentos.filter(x => x.id !== f.id);
+        salvarFilamentos();
+        renderFilamentos();
+        atualizarMaterialOptions();
+      }
+    });
+    tbody.appendChild(tr);
+  });
+}
+
+function adicionarFilamento() {
+  const novoId = filamentos.length ? Math.max(...filamentos.map(f => f.id)) + 1 : 1;
+  filamentos.push({ id: novoId, tipo: '', marca: '', preco: 0, unidade: 'kg', link: '', uso: '' });
+  salvarFilamentos();
+  renderFilamentos();
+  atualizarMaterialOptions();
+}
+
+/* ===== Calculadora ===== */
+function atualizarMaterialOptions() {
+  const sel = document.getElementById('calc-material');
+  if (!sel) return;
+  const valorAtual = sel.value;
+  sel.innerHTML = '';
+  filamentos.forEach(f => {
+    const opt = document.createElement('option');
+    opt.value = f.id;
+    opt.textContent = `${f.tipo} (${f.marca}) — R$ ${f.preco}/${f.unidade}`;
+    sel.appendChild(opt);
+  });
+  if (valorAtual) sel.value = valorAtual;
+  recalcCalc();
+}
+
+function recalcCalc() {
+  const matId = parseInt(document.getElementById('calc-material').value);
+  const mat = filamentos.find(f => f.id === matId);
+  const peso = parseFloat(document.getElementById('i-calc-peso').value) || 0;
+  const tempo = parseFloat(document.getElementById('i-calc-tempo').value) || 0;
+  const watts = parseFloat(document.getElementById('i-calc-watts').value) || 0;
+  const energia = parseFloat(document.getElementById('i-calc-energia').value) || 0;
+  const falha = parseFloat(document.getElementById('i-calc-falha').value) || 0;
+  const depr = parseFloat(document.getElementById('i-calc-depr').value) || 0;
+  const margem = parseFloat(document.getElementById('i-calc-margem').value) || 0;
+
+  if (!mat) return;
+  document.getElementById('calc-mat-preco').textContent = mat.preco.toFixed(2).replace('.', ',') + ' /' + mat.unidade;
+
+  // Material: preço por grama (kg=1000g, L=1000ml ≈ 1100g de resina, simplificamos)
+  const precoPorG = mat.preco / 1000;
+  const custoMaterial = peso * precoPorG;
+
+  // Energia: kWh = (W/1000) * h
+  const custoEnergia = (watts / 1000) * tempo * energia;
+
+  // Depreciação
+  const custoDepreciacao = tempo * depr;
+
+  // Custo base
+  const custoBase = custoMaterial + custoEnergia + custoDepreciacao;
+
+  // Ajuste por falha (se 10% falha, divide por 0.9)
+  const custoAjustado = custoBase / (1 - falha / 100);
+
+  // Preço de venda com margem
+  const precoVenda = custoAjustado * (1 + margem / 100);
+  const lucro = precoVenda - custoAjustado;
+  const lucroPorHora = tempo > 0 ? lucro / tempo : 0;
+
+  const fmtBR = v => 'R$ ' + v.toFixed(2).replace('.', ',');
+  document.getElementById('r-custo-mat').textContent = fmtBR(custoMaterial);
+  document.getElementById('r-custo-energia').textContent = fmtBR(custoEnergia);
+  document.getElementById('r-custo-total').textContent = fmtBR(custoAjustado);
+  document.getElementById('r-preco-venda').textContent = fmtBR(precoVenda);
+  document.getElementById('r-lucro-info').textContent = `Lucro por peça: ${fmtBR(lucro)} · Lucro/hora: ${fmtBR(lucroPorHora)}`;
+}
+
+/* Sincronização sliders/inputs da calculadora */
+const CALC_FIELDS = [
+  { key: 'peso', decimals: 0 },
+  { key: 'tempo', decimals: 1 },
+  { key: 'watts', decimals: 0 },
+  { key: 'energia', decimals: 2 },
+  { key: 'falha', decimals: 0 },
+  { key: 'depr', decimals: 2 },
+  { key: 'margem', decimals: 0 }
+];
+
+CALC_FIELDS.forEach(({ key, decimals }) => {
+  const slider = document.getElementById('calc-' + key);
+  const input = document.getElementById('i-calc-' + key);
+  if (!slider || !input) return;
+  slider.addEventListener('input', () => {
+    const v = parseFloat(slider.value);
+    input.value = decimals > 0 ? v.toFixed(decimals) : Math.round(v);
+    recalcCalc();
+  });
+  input.addEventListener('input', () => {
+    const v = parseFloat(input.value);
+    if (isNaN(v)) return;
+    const min = parseFloat(slider.min);
+    const max = parseFloat(slider.max);
+    slider.value = Math.max(min, Math.min(max, v));
+    recalcCalc();
+  });
+});
+
+document.getElementById('calc-material')?.addEventListener('change', recalcCalc);
+
+/* ===== ROI ===== */
+const ROI_FIELDS = [
+  { key: 'invest', decimals: 0 },
+  { key: 'preco', decimals: 0 },
+  { key: 'custo', decimals: 0 },
+  { key: 'pecas', decimals: 0 },
+  { key: 'fixos', decimals: 0 }
+];
+
+ROI_FIELDS.forEach(({ key, decimals }) => {
+  const slider = document.getElementById('roi-' + key);
+  const input = document.getElementById('i-roi-' + key);
+  if (!slider || !input) return;
+  slider.addEventListener('input', () => {
+    input.value = Math.round(parseFloat(slider.value));
+    renderROI();
+  });
+  input.addEventListener('input', () => {
+    const v = parseFloat(input.value);
+    if (isNaN(v)) return;
+    const min = parseFloat(slider.min);
+    const max = parseFloat(slider.max);
+    slider.value = Math.max(min, Math.min(max, v));
+    renderROI();
+  });
+});
+
+let chartROI = null;
+function renderROI() {
+  const invest = parseFloat(document.getElementById('i-roi-invest').value) || 0;
+  const preco = parseFloat(document.getElementById('i-roi-preco').value) || 0;
+  const custo = parseFloat(document.getElementById('i-roi-custo').value) || 0;
+  const pecas = parseFloat(document.getElementById('i-roi-pecas').value) || 0;
+  const fixos = parseFloat(document.getElementById('i-roi-fixos').value) || 0;
+
+  const receita = preco * pecas;
+  const lucroBruto = (preco - custo) * pecas;
+  const lucroLiquido = lucroBruto - fixos;
+  const payback = lucroLiquido > 0 ? invest / lucroLiquido : Infinity;
+
+  const fmtBR = v => 'R$ ' + Math.round(v).toLocaleString('pt-BR');
+  document.getElementById('roi-receita').textContent = fmtBR(receita);
+  document.getElementById('roi-lucro').textContent = fmtBR(lucroLiquido);
+  document.getElementById('roi-payback').textContent = isFinite(payback) ? payback.toFixed(1) + ' meses' : '∞';
+
+  // Gráfico de evolução acumulada (24 meses)
+  const labels = [], data = [];
+  let acum = -invest;
+  for (let m = 0; m <= 24; m++) {
+    labels.push('M' + m);
+    data.push(Math.round(acum));
+    acum += lucroLiquido;
+  }
+  const canvas = document.getElementById('grafico-roi');
+  if (!canvas) return;
+  if (chartROI) chartROI.destroy();
+  chartROI = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Resultado acumulado',
+        data,
+        borderColor: '#1D9E75',
+        backgroundColor: 'rgba(29,158,117,0.1)',
+        fill: true,
+        tension: 0.1,
+        pointRadius: 2,
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: {
+          ticks: { callback: v => 'R$ ' + (v / 1000).toFixed(1) + 'k' },
+          grid: { color: ctx => ctx.tick.value === 0 ? 'rgba(255,0,0,0.4)' : 'rgba(0,0,0,0.05)' }
+        }
+      }
+    }
+  });
+}
+
+/* ===== Notas ===== */
+const notasEl = document.getElementById('notas-3d');
+if (notasEl) {
+  notasEl.value = localStorage.getItem(KEY_NOTAS_3D) || '';
+  notasEl.addEventListener('input', () => {
+    localStorage.setItem(KEY_NOTAS_3D, notasEl.value);
+  });
+}
+
+/* ===== Inicialização ===== */
+renderImpressoras();
+renderFilamentos();
+atualizarMaterialOptions();
+recalcCalc();
 </script>
 </body>
 </html>
