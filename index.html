@@ -536,6 +536,7 @@
       <button class="sub-tab" data-subtab="filamentos">Filamentos / Resinas</button>
       <button class="sub-tab" data-subtab="calc">Calculadora</button>
       <button class="sub-tab" data-subtab="roi">ROI</button>
+      <button class="sub-tab" data-subtab="setup_pc">Setup PC</button>
       <button class="sub-tab" data-subtab="estudos">Estudos</button>
     </div>
 
@@ -727,6 +728,62 @@
         <div class="chart-wrap">
           <canvas id="grafico-roi" role="img" aria-label="Gráfico de evolução do retorno acumulado"></canvas>
         </div>
+      </div>
+    </div>
+
+    <!-- SETUP PC -->
+    <div class="sub-panel" data-subpanel="setup_pc">
+      <div class="alert alert-info">
+        Build de PC para impressão 3D + modelagem CAD. Edite os preços conforme pesquisa nas lojas brasileiras (Pichau, Kabum, Terabyte). Componentes "obrigatórios" desmarcados saem do total.
+      </div>
+
+      <div class="grid-3">
+        <div class="metric">
+          <p class="metric-label">Total da build</p>
+          <p class="metric-value" id="pc-total">R$ 0</p>
+          <p class="metric-sub" id="pc-total-sub">obrigatórios + opcionais</p>
+        </div>
+        <div class="metric">
+          <p class="metric-label">Apenas obrigatórios</p>
+          <p class="metric-value" id="pc-obrigatorios">R$ 0</p>
+          <p class="metric-sub">build mínima funcional</p>
+        </div>
+        <div class="metric">
+          <p class="metric-label">Componentes</p>
+          <p class="metric-value" id="pc-count">0</p>
+          <p class="metric-sub" id="pc-count-sub">cadastrados</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="h3">Componentes da build</h3>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:14%;">Componente</th>
+                <th style="width:24%;">Modelo</th>
+                <th style="width:10%;">Preço (R$)</th>
+                <th style="width:6%;">Qtd</th>
+                <th style="width:10%;">Subtotal</th>
+                <th style="width:7%;">Link</th>
+                <th style="width:18%;">Notas</th>
+                <th style="width:7%;">Obrig.</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="setup-pc-tbody"></tbody>
+          </table>
+        </div>
+        <button class="add-btn" onclick="adicionarComponentePC()">+ Adicionar componente</button>
+      </div>
+
+      <div class="card">
+        <h3 class="h3">📋 Notas estratégicas</h3>
+        <p style="font-size:13px;color:var(--text-2);margin:0 0 8px;"><b>Quando comprar:</b> 3-6 meses após chegar no Brasil. Estabilizar primeiro (carro, escola, emprego). Hardware desvaloriza rápido.</p>
+        <p style="font-size:13px;color:var(--text-2);margin:0 0 8px;"><b>Onde comprar:</b> Pichau, Kabum, Terabyte Shop. Mercado Livre Full com vendedor reputado também funciona.</p>
+        <p style="font-size:13px;color:var(--text-2);margin:0 0 8px;"><b>Trazer de Portugal?</b> Não vale a pena para desktop (frete + impostos > diferença). Notebook sim, com adaptador.</p>
+        <p style="font-size:13px;color:var(--text-2);margin:0;"><b>Upgrade futuro:</b> AM5 garante CPU nova até 2027+. Adicionar GPU dedicada quando entrar em Blender pesado.</p>
       </div>
     </div>
 
@@ -1052,10 +1109,20 @@ async function recarregarDaNuvem() {
   }
   try {
     setSyncStatus('↻ Buscando dados da nuvem...', 'sync');
-    const res = await fetch(API_URL);
-    const data = await res.json();
-    if (!data.ok) throw new Error(data.error || 'Resposta inválida');
-    const items = (data.items || []).map(it => ({
+    // Buscar as 4 tabelas em paralelo
+    const [resLista, resImp, resFil, resPC] = await Promise.all([
+      fetch(API_URL + '?tabela=lista').then(r => r.json()),
+      fetch(API_URL + '?tabela=impressoras').then(r => r.json()),
+      fetch(API_URL + '?tabela=filamentos').then(r => r.json()),
+      fetch(API_URL + '?tabela=setup_pc').then(r => r.json()).catch(() => ({ ok: true, items: [] }))
+    ]);
+
+    if (!resLista.ok) throw new Error('lista: ' + (resLista.error || 'falha'));
+    if (!resImp.ok) throw new Error('impressoras: ' + (resImp.error || 'falha'));
+    if (!resFil.ok) throw new Error('filamentos: ' + (resFil.error || 'falha'));
+
+    // Lista de compras
+    lista = (resLista.items || []).map(it => ({
       id: parseInt(it.id) || 0,
       comodo: String(it.comodo || ''),
       item: String(it.item || ''),
@@ -1066,13 +1133,80 @@ async function recarregarDaNuvem() {
       prio: String(it.prio || 'P2'),
       status: String(it.status || 'Pesquisando')
     }));
-    lista = items;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
     renderLista();
-    setSyncStatus('☁️ Sincronizado com Google Sheets · ' + items.length + ' itens carregados', 'ok');
+
+    // Impressoras
+    if (typeof impressoras !== 'undefined') {
+      impressoras = (resImp.items || []).map(it => ({
+        id: parseInt(it.id) || 0,
+        modelo: String(it.modelo || ''),
+        tipo: String(it.tipo || 'FDM'),
+        preco: parseFloat(it.preco) || 0,
+        volume: String(it.volume || ''),
+        velocidade: String(it.velocidade || ''),
+        link: String(it.link || ''),
+        notas: String(it.notas || ''),
+        favorita: it.favorita === true || it.favorita === 'true' || it.favorita === 'TRUE'
+      }));
+      localStorage.setItem(KEY_IMPRESSORAS, JSON.stringify(impressoras));
+      renderImpressoras();
+    }
+
+    // Filamentos
+    if (typeof filamentos !== 'undefined') {
+      filamentos = (resFil.items || []).map(it => ({
+        id: parseInt(it.id) || 0,
+        tipo: String(it.tipo || ''),
+        marca: String(it.marca || ''),
+        preco: parseFloat(it.preco) || 0,
+        unidade: String(it.unidade || 'kg'),
+        link: String(it.link || ''),
+        uso: String(it.uso || '')
+      }));
+      localStorage.setItem(KEY_FILAMENTOS, JSON.stringify(filamentos));
+      renderFilamentos();
+      atualizarMaterialOptions();
+    }
+
+    // Setup PC
+    if (typeof setupPC !== 'undefined' && resPC && resPC.ok && resPC.items) {
+      setupPC = resPC.items.map(it => ({
+        id: parseInt(it.id) || 0,
+        componente: String(it.componente || ''),
+        modelo: String(it.modelo || ''),
+        preco: parseFloat(it.preco) || 0,
+        quantidade: parseFloat(it.quantidade) || 1,
+        link: String(it.link || ''),
+        notas: String(it.notas || ''),
+        obrigatorio: it.obrigatorio === true || it.obrigatorio === 'true' || it.obrigatorio === 'TRUE'
+      }));
+      localStorage.setItem(KEY_SETUP_PC, JSON.stringify(setupPC));
+      if (typeof renderSetupPC === 'function') renderSetupPC();
+    }
+
+    const totalItens = lista.length + (resImp.items || []).length + (resFil.items || []).length + ((resPC && resPC.items) ? resPC.items.length : 0);
+    setSyncStatus('☁️ Sincronizado · ' + totalItens + ' registros', 'ok');
   } catch (e) {
     console.error(e);
     setSyncStatus('⚠️ Erro ao buscar da nuvem: ' + e.message + '. Usando dados locais. <button onclick="configurarAPI()">Reconfigurar</button>', 'erro');
+  }
+}
+
+async function salvarTabelaNaNuvem(tabela, items) {
+  if (!API_URL) return;
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'save_all', tabela, items })
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Falha ao salvar');
+    return true;
+  } catch (e) {
+    console.error('Erro ao salvar ' + tabela + ':', e);
+    return false;
   }
 }
 
@@ -1081,14 +1215,8 @@ async function salvarNaNuvem() {
   isSyncing = true;
   try {
     setSyncStatus('↻ Salvando na nuvem...', 'sync');
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      // Apps Script requer text/plain ou form-data para evitar preflight CORS
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'save_all', items: lista })
-    });
-    const data = await res.json();
-    if (!data.ok) throw new Error(data.error || 'Falha ao salvar');
+    const ok = await salvarTabelaNaNuvem('lista', lista);
+    if (!ok) throw new Error('Falha ao salvar lista');
     setSyncStatus('☁️ Sincronizado com Google Sheets · última atualização agora', 'ok');
   } catch (e) {
     console.error(e);
@@ -1096,6 +1224,19 @@ async function salvarNaNuvem() {
   } finally {
     isSyncing = false;
   }
+}
+
+/* Debounce separado por tabela */
+const saveTimers = {};
+function agendarSalvarTabela(tabela, getItems) {
+  if (!API_URL) return;
+  clearTimeout(saveTimers[tabela]);
+  saveTimers[tabela] = setTimeout(async () => {
+    setSyncStatus('↻ Salvando ' + tabela + ' na nuvem...', 'sync');
+    const ok = await salvarTabelaNaNuvem(tabela, getItems());
+    if (ok) setSyncStatus('☁️ ' + tabela + ' sincronizado', 'ok');
+    else setSyncStatus('⚠️ Erro ao salvar ' + tabela, 'erro');
+  }, 1500);
 }
 
 /* Agenda salvamento com debounce de 1.5s para não floodar a API */
@@ -1363,9 +1504,11 @@ let filamentos = JSON.parse(localStorage.getItem(KEY_FILAMENTOS) || 'null') || J
 
 function salvarImpressoras() {
   localStorage.setItem(KEY_IMPRESSORAS, JSON.stringify(impressoras));
+  agendarSalvarTabela('impressoras', () => impressoras);
 }
 function salvarFilamentos() {
   localStorage.setItem(KEY_FILAMENTOS, JSON.stringify(filamentos));
+  agendarSalvarTabela('filamentos', () => filamentos);
 }
 
 /* ===== Sub-tabs ===== */
@@ -1691,6 +1834,95 @@ renderImpressoras();
 renderFilamentos();
 atualizarMaterialOptions();
 recalcCalc();
+
+/* ===== SETUP PC ===== */
+const KEY_SETUP_PC = 'volta_brasil_3d_setup_pc';
+
+const SETUP_PC_PADRAO = [
+  { id: 1, componente: 'CPU', modelo: 'AMD Ryzen 5 7600', preco: 1200, quantidade: 1, link: '', notas: '6 núcleos, AM5, ótimo para slicing e CAD', obrigatorio: true },
+  { id: 2, componente: 'Placa-mãe', modelo: 'A620M ou B650M (AM5)', preco: 800, quantidade: 1, link: '', notas: 'AM5 garante upgrade futuro', obrigatorio: true },
+  { id: 3, componente: 'RAM', modelo: '32GB DDR5 5600MHz (2x16)', preco: 700, quantidade: 1, link: '', notas: 'Dual channel obrigatório. Crítico para CAD.', obrigatorio: true },
+  { id: 4, componente: 'SSD', modelo: 'NVMe 1TB Kingston NV2 ou WD SN580', preco: 400, quantidade: 1, link: '', notas: 'Velocidade real para slicer e CAD', obrigatorio: true },
+  { id: 5, componente: 'Fonte', modelo: '500W 80+ Bronze (Corsair, Cooler Master)', preco: 320, quantidade: 1, link: '', notas: 'Sobra para upgrade futuro de GPU', obrigatorio: true },
+  { id: 6, componente: 'Gabinete', modelo: 'ATX médio com bom airflow', preco: 250, quantidade: 1, link: '', notas: 'Estética + ventilação', obrigatorio: true },
+  { id: 7, componente: 'GPU', modelo: 'Integrada (Ryzen) ou RX 6600 8GB', preco: 0, quantidade: 1, link: '', notas: 'Integrada serve. Adicionar GPU para Blender pesado (~R$ 1.200)', obrigatorio: false },
+  { id: 8, componente: 'Monitor', modelo: '24" Full HD IPS', preco: 800, quantidade: 1, link: '', notas: '27" 1440p é o ideal (~R$ 1.300)', obrigatorio: true },
+  { id: 9, componente: 'Teclado + Mouse', modelo: 'Combo decente com fio', preco: 200, quantidade: 1, link: '', notas: 'Mouse com scroll click é importante para CAD', obrigatorio: true },
+  { id: 10, componente: 'Mouse CAD (extra)', modelo: 'Logitech M720 ou similar', preco: 350, quantidade: 1, link: '', notas: 'Opcional mas faz diferença em Fusion/Blender', obrigatorio: false }
+];
+
+let setupPC = JSON.parse(localStorage.getItem(KEY_SETUP_PC) || 'null') || JSON.parse(JSON.stringify(SETUP_PC_PADRAO));
+
+function salvarSetupPC() {
+  localStorage.setItem(KEY_SETUP_PC, JSON.stringify(setupPC));
+  agendarSalvarTabela('setup_pc', () => setupPC);
+}
+
+function renderSetupPC() {
+  const tbody = document.getElementById('setup-pc-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  setupPC.forEach(c => {
+    const tr = document.createElement('tr');
+    tr.className = 'item-row';
+    if (!c.obrigatorio) tr.style.opacity = '0.65';
+    const linkValido = c.link && c.link.length > 5;
+    const subtotal = (c.quantidade || 1) * (c.preco || 0);
+    tr.innerHTML = `
+      <td><input type="text" value="${escapeHtml(c.componente)}" data-field="componente"></td>
+      <td><input type="text" value="${escapeHtml(c.modelo)}" data-field="modelo"></td>
+      <td><input type="number" value="${c.preco}" min="0" step="50" data-field="preco"></td>
+      <td><input type="number" value="${c.quantidade}" min="1" step="1" data-field="quantidade"></td>
+      <td><strong>R$ ${Math.round(subtotal).toLocaleString('pt-BR')}</strong></td>
+      <td>
+        ${linkValido ? `<a href="${escapeHtml(c.link)}" target="_blank" class="link-btn">↗</a>` : ''}
+        <input type="url" value="${escapeHtml(c.link)}" placeholder="https://" data-field="link" style="margin-top:4px;">
+      </td>
+      <td><input type="text" value="${escapeHtml(c.notas)}" data-field="notas"></td>
+      <td style="text-align:center;"><input type="checkbox" data-field="obrigatorio" ${c.obrigatorio ? 'checked' : ''}></td>
+      <td><button class="del-btn">✕</button></td>
+    `;
+    tr.querySelectorAll('input').forEach(el => {
+      el.addEventListener('change', () => {
+        const item = setupPC.find(x => x.id === c.id);
+        if (!item) return;
+        if (el.type === 'checkbox') item[el.dataset.field] = el.checked;
+        else if (el.type === 'number') item[el.dataset.field] = parseFloat(el.value) || 0;
+        else item[el.dataset.field] = el.value;
+        salvarSetupPC();
+        renderSetupPC();
+      });
+    });
+    tr.querySelector('.del-btn').addEventListener('click', () => {
+      if (confirm('Remover este componente?')) {
+        setupPC = setupPC.filter(x => x.id !== c.id);
+        salvarSetupPC();
+        renderSetupPC();
+      }
+    });
+    tbody.appendChild(tr);
+  });
+  atualizarTotaisPC();
+}
+
+function atualizarTotaisPC() {
+  const total = setupPC.reduce((s, c) => s + (c.quantidade || 1) * (c.preco || 0), 0);
+  const obrigatorios = setupPC.filter(c => c.obrigatorio).reduce((s, c) => s + (c.quantidade || 1) * (c.preco || 0), 0);
+  const fmtBR = v => 'R$ ' + Math.round(v).toLocaleString('pt-BR');
+  document.getElementById('pc-total').textContent = fmtBR(total);
+  document.getElementById('pc-obrigatorios').textContent = fmtBR(obrigatorios);
+  document.getElementById('pc-count').textContent = setupPC.length;
+  document.getElementById('pc-count-sub').textContent = setupPC.filter(c => c.obrigatorio).length + ' obrigatórios';
+}
+
+function adicionarComponentePC() {
+  const novoId = setupPC.length ? Math.max(...setupPC.map(c => c.id)) + 1 : 1;
+  setupPC.push({ id: novoId, componente: '', modelo: '', preco: 0, quantidade: 1, link: '', notas: '', obrigatorio: true });
+  salvarSetupPC();
+  renderSetupPC();
+}
+
+renderSetupPC();
 </script>
 </body>
 </html>
