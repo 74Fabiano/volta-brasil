@@ -2103,7 +2103,7 @@ function renderPortugalRow(it) {
   tr.innerHTML = `
     <td><input type="text" value="${escapeHtml(it.item)}" placeholder="Nome do item" data-field="item"></td>
     <td>
-      <select data-field="status" style="background:${statusCor};">
+      <select data-field="status" style="background:${statusCor}; color:#1a1a18;">
         ${PT_STATUS.map(s => `<option value="${s}" ${s === it.status ? 'selected' : ''}>${s}</option>`).join('')}
       </select>
     </td>
