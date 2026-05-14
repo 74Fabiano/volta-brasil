@@ -2143,7 +2143,7 @@ function atualizarResumoPortugal() {
   const venderVal = vender.reduce((s, i) => s + (i.valor || 0), 0);
 
   document.getElementById('pt-levar-count').textContent = levar.length;
-  document.getElementById('pt-comprar-val').textContent = 'R$ ' + Math.round(comprarVal).toLocaleString('pt-BR');
+  document.getElementById('pt-comprar-val').textContent = '€ ' + Math.round(comprarVal).toLocaleString('pt-BR');
   document.getElementById('pt-vender-val').textContent = '€ ' + Math.round(venderVal).toLocaleString('pt-BR');
   document.getElementById('pt-total-count').textContent = portugal.length;
 
@@ -2151,7 +2151,7 @@ function atualizarResumoPortugal() {
   tbody.innerHTML = '';
   const infos = [
     { status: 'Levar', items: levar, moeda: '', nota: 'na bagagem/mudança' },
-    { status: 'Comprar', items: comprar, moeda: 'R$ ', nota: 'gasto em PT' },
+    { status: 'Comprar', items: comprar, moeda: '€ ', nota: 'gasto em PT' },
     { status: 'Vender', items: vender, moeda: '€ ', nota: 'arrecadação estimada' }
   ];
   infos.forEach(info => {
