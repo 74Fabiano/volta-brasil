@@ -327,7 +327,7 @@
 <div class="container">
   <header>
     <h1>Planejamento da volta ao Brasil</h1>
-    <p>Fabiano — horizonte de 6 a 8 meses · cidade do interior · família de 3</p>
+    <p>Fabiano — horizonte de 12 meses · cidade do interior · família de 3</p>
   </header>
 
   <div class="tabs">
@@ -335,22 +335,26 @@
     <button class="tab" data-tab="cronograma">Cronograma</button>
     <button class="tab" data-tab="checklist">Checklist</button>
     <button class="tab" data-tab="lista">Lista de compras</button>
+    <button class="tab" data-tab="portugal">Portugal</button>
     <button class="tab" data-tab="impressao3d">Impressão 3D</button>
     <button class="tab" data-tab="invest">Investimentos</button>
   </div>
 
   <!-- ====== RESUMO ====== -->
   <div class="panel active" data-panel="resumo">
+    <div class="alert alert-success">
+      💰 Capital disponível hoje: <b>€ 9.000</b> — esse é o ponto de partida do simulador abaixo.
+    </div>
     <div class="grid-3">
       <div class="metric">
         <p class="metric-label">Meta total estimada</p>
-        <p class="metric-value" id="m-meta">R$ 60.000</p>
+        <p class="metric-value" id="m-meta">R$ 58.000</p>
         <p class="metric-sub">carro + recheio + reserva</p>
       </div>
       <div class="metric">
-        <p class="metric-label">Acumulado</p>
+        <p class="metric-label">Acumulado em 12 meses</p>
         <p class="metric-value" id="m-acum">R$ 50.500</p>
-        <p class="metric-sub">poupança + bônus + venda PT</p>
+        <p class="metric-sub">€9k disponível + poupança + bônus + venda PT</p>
       </div>
       <div class="metric">
         <p class="metric-label">Gap / sobra</p>
@@ -362,6 +366,14 @@
     <div class="card">
       <h3 class="h3">Simulador de cenários</h3>
       <p style="font-size:12px;color:var(--text-3);margin:0 0 14px;">Arraste o slider ou digite o valor diretamente no campo à direita.</p>
+      <div class="row">
+        <label>Capital disponível hoje (€)</label>
+        <input type="range" id="s-capital" min="0" max="30000" step="100" value="9000">
+        <span class="sim-out">
+          <span class="prefix">€</span>
+          <input type="number" id="i-capital" min="0" step="100" value="9000">
+        </span>
+      </div>
       <div class="row">
         <label>Câmbio €→R$</label>
         <input type="range" id="s-cambio" min="5" max="7" step="0.01" value="6">
@@ -522,6 +534,42 @@
     </div>
 
     <div id="rooms-container"></div>
+  </div>
+
+  <!-- ====== PORTUGAL ====== -->
+  <div class="panel" data-panel="portugal">
+    <div class="alert alert-info">
+      Controle do que fazer com cada item antes da mudança: <b>Levar</b> na bagagem/mudança, <b>Comprar</b> em PT (mais barato que no BR), ou <b>Vender</b> antes de ir.
+    </div>
+
+    <div class="summary-box">
+      <div class="summary-cell">
+        <div class="lbl">📦 Levar — itens</div>
+        <div class="val" id="pt-levar-count">0</div>
+      </div>
+      <div class="summary-cell">
+        <div class="lbl">🛒 Comprar em PT</div>
+        <div class="val" id="pt-comprar-val">R$ 0</div>
+      </div>
+      <div class="summary-cell">
+        <div class="lbl">💸 Vender — arrecadação</div>
+        <div class="val" id="pt-vender-val">€ 0</div>
+      </div>
+      <div class="summary-cell">
+        <div class="lbl">Total de itens</div>
+        <div class="val" id="pt-total-count">0</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="h3">Resumo por status</h3>
+      <table>
+        <thead><tr><th>Status</th><th style="text-align:right;">Itens</th><th style="text-align:right;">Valor estimado</th></tr></thead>
+        <tbody id="pt-status-summary"></tbody>
+      </table>
+    </div>
+
+    <div id="pt-categorias-container"></div>
   </div>
 
   <!-- ====== IMPRESSÃO 3D ====== -->
@@ -913,6 +961,7 @@ const fmtEur = v => '€ ' + Math.round(v).toLocaleString('pt-BR');
 
 /* ============ SIMULADOR ============ */
 const SIM_FIELDS = [
+  { key: 'capital', decimals: 0 },
   { key: 'cambio', decimals: 2 },
   { key: 'mensal', decimals: 0 },
   { key: 'bonus',  decimals: 0 },
@@ -938,6 +987,7 @@ function setSimValue(key, value, decimals) {
 }
 
 function recalc() {
+  const capital = getSimValue('capital');
   const cambio = getSimValue('cambio');
   const mensal = getSimValue('mensal');
   const bonus = getSimValue('bonus');
@@ -945,9 +995,9 @@ function recalc() {
   const prazo = Math.max(1, parseInt(getSimValue('prazo')) || 1);
   const meta = getSimValue('meta');
 
-  const inicial = 2500;
-  const totalEur = mensal * prazo + bonus + venda;
-  const totalBrl = inicial + totalEur * cambio;
+  // Capital disponível já em euros + aportes futuros, tudo convertido para BRL
+  const totalEur = capital + mensal * prazo + bonus + venda;
+  const totalBrl = totalEur * cambio;
   const gap = meta - totalBrl;
 
   document.getElementById('m-meta').textContent = fmt(meta);
@@ -991,6 +1041,7 @@ recalc();
 /* ============ CRONOGRAMA ============ */
 let chartCron = null, chartAloc = null;
 function renderCronograma() {
+  const capital = getSimValue('capital');
   const cambio = getSimValue('cambio');
   const mensal = getSimValue('mensal');
   const bonus = getSimValue('bonus');
@@ -998,9 +1049,16 @@ function renderCronograma() {
   const prazo = Math.max(1, parseInt(getSimValue('prazo')) || 1);
 
   const labels = [], data = [];
-  let saldo = 2500;
+  // Parte do capital disponível em euros, convertido para BRL
+  let saldo = capital * cambio;
   const tbody = document.getElementById('tbody-meses');
   tbody.innerHTML = '';
+  // Linha M0 = ponto de partida
+  labels.push('M0');
+  data.push(Math.round(saldo));
+  const tr0 = document.createElement('tr');
+  tr0.innerHTML = `<td>M0</td><td>Capital disponível hoje (€${Math.round(capital).toLocaleString('pt-BR')})</td><td style="text-align:right;">${fmt(saldo)}</td>`;
+  tbody.appendChild(tr0);
   for (let i = 1; i <= prazo; i++) {
     saldo += mensal * cambio;
     let acao = 'Aporte mensal regular';
@@ -1109,12 +1167,13 @@ async function recarregarDaNuvem() {
   }
   try {
     setSyncStatus('↻ Buscando dados da nuvem...', 'sync');
-    // Buscar as 4 tabelas em paralelo
-    const [resLista, resImp, resFil, resPC] = await Promise.all([
+    // Buscar as 5 tabelas em paralelo
+    const [resLista, resImp, resFil, resPC, resPT] = await Promise.all([
       fetch(API_URL + '?tabela=lista').then(r => r.json()),
       fetch(API_URL + '?tabela=impressoras').then(r => r.json()),
       fetch(API_URL + '?tabela=filamentos').then(r => r.json()),
-      fetch(API_URL + '?tabela=setup_pc').then(r => r.json()).catch(() => ({ ok: true, items: [] }))
+      fetch(API_URL + '?tabela=setup_pc').then(r => r.json()).catch(() => ({ ok: true, items: [] })),
+      fetch(API_URL + '?tabela=portugal').then(r => r.json()).catch(() => ({ ok: true, items: [] }))
     ]);
 
     if (!resLista.ok) throw new Error('lista: ' + (resLista.error || 'falha'));
@@ -1185,7 +1244,20 @@ async function recarregarDaNuvem() {
       if (typeof renderSetupPC === 'function') renderSetupPC();
     }
 
-    const totalItens = lista.length + (resImp.items || []).length + (resFil.items || []).length + ((resPC && resPC.items) ? resPC.items.length : 0);
+    // Portugal
+    if (typeof portugal !== 'undefined' && resPT && resPT.ok && resPT.items) {
+      portugal = resPT.items.map(it => ({
+        id: parseInt(it.id) || 0,
+        item: String(it.item || ''),
+        categoria: String(it.categoria || 'Outros'),
+        status: String(it.status || 'Levar'),
+        valor: parseFloat(it.valor) || 0
+      }));
+      localStorage.setItem(KEY_PORTUGAL, JSON.stringify(portugal));
+      if (typeof renderPortugal === 'function') renderPortugal();
+    }
+
+    const totalItens = lista.length + (resImp.items || []).length + (resFil.items || []).length + ((resPC && resPC.items) ? resPC.items.length : 0) + ((resPT && resPT.items) ? resPT.items.length : 0);
     setSyncStatus('☁️ Sincronizado · ' + totalItens + ' registros', 'ok');
   } catch (e) {
     console.error(e);
@@ -1923,6 +1995,175 @@ function adicionarComponentePC() {
 }
 
 renderSetupPC();
+
+/* ============================================ */
+/* ============ ABA PORTUGAL ================== */
+/* ============================================ */
+
+const KEY_PORTUGAL = 'volta_brasil_portugal';
+
+const PORTUGAL_PADRAO = [
+  // Eletrônicos
+  { id: 1, item: 'Notebook pessoal', categoria: 'Eletrônicos', status: 'Levar', valor: 0 },
+  { id: 2, item: 'Celulares da família', categoria: 'Eletrônicos', status: 'Levar', valor: 0 },
+  { id: 3, item: 'Tablet do filho', categoria: 'Eletrônicos', status: 'Levar', valor: 0 },
+  { id: 4, item: 'Carregadores e cabos', categoria: 'Eletrônicos', status: 'Levar', valor: 0 },
+  { id: 5, item: 'Adaptadores de tomada PT→BR', categoria: 'Eletrônicos', status: 'Comprar', valor: 30 },
+  { id: 6, item: 'Fone de ouvido / headphones', categoria: 'Eletrônicos', status: 'Levar', valor: 0 },
+  { id: 7, item: 'TV', categoria: 'Eletrônicos', status: 'Vender', valor: 200 },
+  { id: 8, item: 'Console de videogame', categoria: 'Eletrônicos', status: 'Levar', valor: 0 },
+  // Roupas
+  { id: 9, item: 'Roupas de inverno (pouco uso no BR)', categoria: 'Roupas', status: 'Vender', valor: 50 },
+  { id: 10, item: 'Roupas de uso frequente', categoria: 'Roupas', status: 'Levar', valor: 0 },
+  { id: 11, item: 'Calçados', categoria: 'Roupas', status: 'Levar', valor: 0 },
+  { id: 12, item: 'Roupas do filho', categoria: 'Roupas', status: 'Levar', valor: 0 },
+  // Documentos
+  { id: 13, item: 'Passaportes (validade OK)', categoria: 'Documentos', status: 'Levar', valor: 0 },
+  { id: 14, item: 'Certidões de nascimento/casamento', categoria: 'Documentos', status: 'Levar', valor: 0 },
+  { id: 15, item: 'Histórico escolar do filho (traduzido)', categoria: 'Documentos', status: 'Levar', valor: 0 },
+  { id: 16, item: 'Declaração final de IRS', categoria: 'Documentos', status: 'Levar', valor: 0 },
+  { id: 17, item: 'Carteira de vacinação', categoria: 'Documentos', status: 'Levar', valor: 0 },
+  { id: 18, item: 'Atestados médicos / receitas', categoria: 'Documentos', status: 'Levar', valor: 0 },
+  // Casa / Utensílios
+  { id: 19, item: 'Móveis grandes', categoria: 'Casa', status: 'Vender', valor: 800 },
+  { id: 20, item: 'Eletrodomésticos (220V não compatível)', categoria: 'Casa', status: 'Vender', valor: 400 },
+  { id: 21, item: 'Roupa de cama / toalhas favoritas', categoria: 'Casa', status: 'Levar', valor: 0 },
+  { id: 22, item: 'Panelas / utensílios pequenos de qualidade', categoria: 'Casa', status: 'Levar', valor: 0 },
+  { id: 23, item: 'Itens decorativos / sentimentais', categoria: 'Casa', status: 'Levar', valor: 0 },
+  // Pessoal
+  { id: 24, item: 'Medicamentos de uso contínuo (estoque)', categoria: 'Pessoal', status: 'Comprar', valor: 100 },
+  { id: 25, item: 'Óculos / lentes reserva', categoria: 'Pessoal', status: 'Comprar', valor: 150 },
+  { id: 26, item: 'Itens de higiene específicos', categoria: 'Pessoal', status: 'Levar', valor: 0 }
+];
+
+const PT_STATUS = ['Levar', 'Comprar', 'Vender'];
+const PT_CATEGORIAS = ['Eletrônicos', 'Roupas', 'Documentos', 'Casa', 'Pessoal', 'Outros'];
+
+let portugal = JSON.parse(localStorage.getItem(KEY_PORTUGAL) || 'null') || JSON.parse(JSON.stringify(PORTUGAL_PADRAO));
+
+function salvarPortugal() {
+  localStorage.setItem(KEY_PORTUGAL, JSON.stringify(portugal));
+  agendarSalvarTabela('portugal', () => portugal);
+}
+
+function ptNextId() {
+  return portugal.length ? Math.max(...portugal.map(i => i.id)) + 1 : 1;
+}
+
+function renderPortugal() {
+  const container = document.getElementById('pt-categorias-container');
+  if (!container) return;
+  container.innerHTML = '';
+
+  PT_CATEGORIAS.forEach(cat => {
+    const items = portugal.filter(i => i.categoria === cat);
+    if (items.length === 0 && cat === 'Outros') return;
+
+    const section = document.createElement('div');
+    section.className = 'card';
+    section.innerHTML = `
+      <div class="room-header">
+        <h3 class="room-title">${cat}</h3>
+        <span class="room-total">${items.length} itens</span>
+      </div>
+      <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:40%;">Item</th>
+            <th style="width:20%;">Status</th>
+            <th style="width:20%;">Valor estimado</th>
+            <th style="width:15%;">Categoria</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody class="pt-items-tbody"></tbody>
+      </table>
+      </div>
+      <button class="add-btn" data-cat="${cat}">+ Adicionar item em ${cat}</button>
+    `;
+    container.appendChild(section);
+
+    const tbody = section.querySelector('.pt-items-tbody');
+    items.forEach(it => tbody.appendChild(renderPortugalRow(it)));
+    section.querySelector('.add-btn').addEventListener('click', () => {
+      portugal.push({ id: ptNextId(), item: '', categoria: cat, status: 'Levar', valor: 0 });
+      salvarPortugal();
+      renderPortugal();
+    });
+  });
+
+  atualizarResumoPortugal();
+}
+
+function renderPortugalRow(it) {
+  const tr = document.createElement('tr');
+  tr.className = 'item-row';
+  const statusCor = it.status === 'Levar' ? 'var(--accent-bg)' : it.status === 'Comprar' ? 'var(--warn-bg)' : 'var(--danger-bg)';
+  tr.innerHTML = `
+    <td><input type="text" value="${escapeHtml(it.item)}" placeholder="Nome do item" data-field="item"></td>
+    <td>
+      <select data-field="status" style="background:${statusCor};">
+        ${PT_STATUS.map(s => `<option value="${s}" ${s === it.status ? 'selected' : ''}>${s}</option>`).join('')}
+      </select>
+    </td>
+    <td><input type="number" value="${it.valor}" min="0" step="10" data-field="valor"></td>
+    <td>
+      <select data-field="categoria">
+        ${PT_CATEGORIAS.map(c => `<option value="${c}" ${c === it.categoria ? 'selected' : ''}>${c}</option>`).join('')}
+      </select>
+    </td>
+    <td><button class="del-btn">✕</button></td>
+  `;
+  tr.querySelectorAll('input, select').forEach(el => {
+    el.addEventListener('change', () => {
+      const item = portugal.find(x => x.id === it.id);
+      if (!item) return;
+      item[el.dataset.field] = el.type === 'number' ? parseFloat(el.value) || 0 : el.value;
+      salvarPortugal();
+      renderPortugal();
+    });
+  });
+  tr.querySelector('.del-btn').addEventListener('click', () => {
+    if (confirm('Remover este item?')) {
+      portugal = portugal.filter(x => x.id !== it.id);
+      salvarPortugal();
+      renderPortugal();
+    }
+  });
+  return tr;
+}
+
+function atualizarResumoPortugal() {
+  const levar = portugal.filter(i => i.status === 'Levar');
+  const comprar = portugal.filter(i => i.status === 'Comprar');
+  const vender = portugal.filter(i => i.status === 'Vender');
+
+  const comprarVal = comprar.reduce((s, i) => s + (i.valor || 0), 0);
+  const venderVal = vender.reduce((s, i) => s + (i.valor || 0), 0);
+
+  document.getElementById('pt-levar-count').textContent = levar.length;
+  document.getElementById('pt-comprar-val').textContent = 'R$ ' + Math.round(comprarVal).toLocaleString('pt-BR');
+  document.getElementById('pt-vender-val').textContent = '€ ' + Math.round(venderVal).toLocaleString('pt-BR');
+  document.getElementById('pt-total-count').textContent = portugal.length;
+
+  const tbody = document.getElementById('pt-status-summary');
+  tbody.innerHTML = '';
+  const infos = [
+    { status: 'Levar', items: levar, moeda: '', nota: 'na bagagem/mudança' },
+    { status: 'Comprar', items: comprar, moeda: 'R$ ', nota: 'gasto em PT' },
+    { status: 'Vender', items: vender, moeda: '€ ', nota: 'arrecadação estimada' }
+  ];
+  infos.forEach(info => {
+    const val = info.items.reduce((s, i) => s + (i.valor || 0), 0);
+    const tr = document.createElement('tr');
+    const valStr = info.status === 'Levar' ? '—' : info.moeda + Math.round(val).toLocaleString('pt-BR');
+    tr.innerHTML = `<td><b>${info.status}</b> <span style="color:var(--text-3);font-size:11px;">${info.nota}</span></td><td style="text-align:right;">${info.items.length}</td><td style="text-align:right;">${valStr}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+renderPortugal();
 </script>
 </body>
 </html>
