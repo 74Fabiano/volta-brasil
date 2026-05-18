@@ -1063,11 +1063,12 @@ recalc();
 const KEY_COMPOSICAO = 'volta_brasil_composicao_meta';
 
 const COMPOSICAO_PADRAO = [
-  { id: 1, item: 'Carro usado', min: 10000, max: 20000 },
-  { id: 2, item: 'Moto usada (fase 2, após estabilizar)', min: 10000, max: 15000 },
-  { id: 3, item: 'Recheio da casa (básico)', min: 20000, max: 35000 },
-  { id: 4, item: 'Reserva de emergência (~6 meses)', min: 18000, max: 18000 },
-  { id: 5, item: 'Mudança / passagens / docs', min: 6000, max: 10000 }
+  { id: 1, item: 'Liquidação FIES (77% desc.)', min: 10000, max: 10000 },
+  { id: 2, item: 'Carro usado', min: 10000, max: 20000 },
+  { id: 3, item: 'Moto usada (fase 2, após estabilizar)', min: 10000, max: 15000 },
+  { id: 4, item: 'Recheio da casa (básico)', min: 20000, max: 35000 },
+  { id: 5, item: 'Reserva de emergência (~6 meses)', min: 18000, max: 18000 },
+  { id: 6, item: 'Mudança / passagens / docs', min: 6000, max: 10000 }
 ];
 
 let composicao = JSON.parse(localStorage.getItem(KEY_COMPOSICAO) || 'null') || JSON.parse(JSON.stringify(COMPOSICAO_PADRAO));
