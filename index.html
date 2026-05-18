@@ -426,13 +426,34 @@
 
     <div class="card">
       <h3 class="h3">Composição da meta</h3>
-      <table>
-        <tr><td>Carro usado</td><td style="text-align:right;">R$ 10.000 – 20.000</td></tr>
-        <tr><td>Moto usada (fase 2, após estabilizar)</td><td style="text-align:right;">R$ 10.000 – 15.000</td></tr>
-        <tr><td>Recheio da casa (básico)</td><td style="text-align:right;">R$ 20.000 – 35.000</td></tr>
-        <tr><td>Reserva de emergência (~6 meses)</td><td style="text-align:right;">R$ 18.000</td></tr>
-        <tr><td>Mudança / passagens / docs</td><td style="text-align:right;">R$ 6.000 – 10.000</td></tr>
-      </table>
+      <p style="font-size:12px;color:var(--text-3);margin:0 0 12px;">Edite os valores mínimo e máximo de cada item. O total atualiza automaticamente e pode ser aplicado como meta no simulador.</p>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:50%;">Item</th>
+              <th style="width:20%;text-align:right;">Mínimo (R$)</th>
+              <th style="width:20%;text-align:right;">Máximo (R$)</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="composicao-tbody"></tbody>
+          <tfoot>
+            <tr style="font-weight:600;border-top:1px solid var(--border-strong);">
+              <td style="padding-top:10px;">Total</td>
+              <td style="text-align:right;padding-top:10px;" id="comp-total-min">R$ 0</td>
+              <td style="text-align:right;padding-top:10px;" id="comp-total-max">R$ 0</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <button class="add-btn" onclick="adicionarComposicao()" style="margin-top:8px;">+ Adicionar item</button>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button onclick="aplicarMeta('min')">Aplicar mínimo na meta</button>
+        <button onclick="aplicarMeta('max')">Aplicar máximo na meta</button>
+        <button onclick="aplicarMeta('medio')" class="primary">Aplicar média na meta</button>
+      </div>
     </div>
   </div>
 
@@ -1037,6 +1058,90 @@ SIM_FIELDS.forEach(({ key, decimals }) => {
 });
 
 recalc();
+
+/* ============ COMPOSIÇÃO DA META ============ */
+const KEY_COMPOSICAO = 'volta_brasil_composicao_meta';
+
+const COMPOSICAO_PADRAO = [
+  { id: 1, item: 'Carro usado', min: 10000, max: 20000 },
+  { id: 2, item: 'Moto usada (fase 2, após estabilizar)', min: 10000, max: 15000 },
+  { id: 3, item: 'Recheio da casa (básico)', min: 20000, max: 35000 },
+  { id: 4, item: 'Reserva de emergência (~6 meses)', min: 18000, max: 18000 },
+  { id: 5, item: 'Mudança / passagens / docs', min: 6000, max: 10000 }
+];
+
+let composicao = JSON.parse(localStorage.getItem(KEY_COMPOSICAO) || 'null') || JSON.parse(JSON.stringify(COMPOSICAO_PADRAO));
+
+function salvarComposicao() {
+  localStorage.setItem(KEY_COMPOSICAO, JSON.stringify(composicao));
+}
+
+function renderComposicao() {
+  const tbody = document.getElementById('composicao-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  composicao.forEach(c => {
+    const tr = document.createElement('tr');
+    tr.className = 'item-row';
+    tr.innerHTML = `
+      <td><input type="text" value="${escapeHtml(c.item)}" data-field="item"></td>
+      <td><input type="number" value="${c.min}" min="0" step="100" data-field="min" style="text-align:right;"></td>
+      <td><input type="number" value="${c.max}" min="0" step="100" data-field="max" style="text-align:right;"></td>
+      <td><button class="del-btn">✕</button></td>
+    `;
+    tr.querySelectorAll('input').forEach(el => {
+      el.addEventListener('change', () => {
+        const item = composicao.find(x => x.id === c.id);
+        if (!item) return;
+        item[el.dataset.field] = el.type === 'number' ? parseFloat(el.value) || 0 : el.value;
+        salvarComposicao();
+        atualizarTotaisComposicao();
+      });
+    });
+    tr.querySelector('.del-btn').addEventListener('click', () => {
+      if (confirm('Remover este item?')) {
+        composicao = composicao.filter(x => x.id !== c.id);
+        salvarComposicao();
+        renderComposicao();
+      }
+    });
+    tbody.appendChild(tr);
+  });
+  atualizarTotaisComposicao();
+}
+
+function atualizarTotaisComposicao() {
+  const totalMin = composicao.reduce((s, c) => s + (c.min || 0), 0);
+  const totalMax = composicao.reduce((s, c) => s + (c.max || 0), 0);
+  document.getElementById('comp-total-min').textContent = fmt(totalMin);
+  document.getElementById('comp-total-max').textContent = fmt(totalMax);
+}
+
+function adicionarComposicao() {
+  const novoId = composicao.length ? Math.max(...composicao.map(c => c.id)) + 1 : 1;
+  composicao.push({ id: novoId, item: '', min: 0, max: 0 });
+  salvarComposicao();
+  renderComposicao();
+}
+
+function aplicarMeta(tipo) {
+  const totalMin = composicao.reduce((s, c) => s + (c.min || 0), 0);
+  const totalMax = composicao.reduce((s, c) => s + (c.max || 0), 0);
+  let valor;
+  if (tipo === 'min') valor = totalMin;
+  else if (tipo === 'max') valor = totalMax;
+  else valor = Math.round((totalMin + totalMax) / 2);
+
+  const slider = document.getElementById('s-meta');
+  const input = document.getElementById('i-meta');
+  const min = parseFloat(slider.min);
+  const max = parseFloat(slider.max);
+  slider.value = Math.max(min, Math.min(max, valor));
+  input.value = Math.round(valor);
+  recalc();
+}
+
+renderComposicao();
 
 /* ============ CRONOGRAMA ============ */
 let chartCron = null, chartAloc = null;
