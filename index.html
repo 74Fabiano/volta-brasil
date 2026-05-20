@@ -2208,6 +2208,48 @@ function renderPortugal() {
   if (!container) return;
   container.innerHTML = '';
 
+
+  PT_CATEGORIAS.forEach(cat => {
+    const items = portugal.filter(i => i.categoria === cat);
+    if (items.length === 0 && cat === 'Outros') return;
+
+    const section = document.createElement('div');
+    section.className = 'card';
+    section.innerHTML = `
+      <div class="room-header">
+        <h3 class="room-title">${cat}</h3>
+        <span class="room-total">${items.length} itens</span>
+      </div>
+      <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:40%;">Item</th>
+            <th style="width:20%;">Status</th>
+            <th style="width:20%;">Valor estimado</th>
+            <th style="width:15%;">Categoria</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody class="pt-items-tbody"></tbody>
+      </table>
+      </div>
+      <button class="add-btn" data-cat="${cat}">+ Adicionar item em ${cat}</button>
+    `;
+    container.appendChild(section);
+
+    const tbody = section.querySelector('.pt-items-tbody');
+    items.forEach(it => tbody.appendChild(renderPortugalRow(it)));
+    section.querySelector('.add-btn').addEventListener('click', () => {
+      portugal.push({ id: ptNextId(), item: '', categoria: cat, status: 'Levar', valor: 0 });
+      salvarPortugal();
+      renderPortugal();
+    });
+  });
+
+  atualizarResumoPortugal();
+}
+
 /* ============================================ */
 /* ============ ABA ANOTAÇÕES ================ */
 /* ============================================ */
@@ -2332,47 +2374,6 @@ document.getElementById('anotacao-busca').addEventListener('input', renderAnotac
 document.getElementById('anotacao-filtro-cat').addEventListener('change', renderAnotacoes);
 
 renderAnotacoes();
-
-  PT_CATEGORIAS.forEach(cat => {
-    const items = portugal.filter(i => i.categoria === cat);
-    if (items.length === 0 && cat === 'Outros') return;
-
-    const section = document.createElement('div');
-    section.className = 'card';
-    section.innerHTML = `
-      <div class="room-header">
-        <h3 class="room-title">${cat}</h3>
-        <span class="room-total">${items.length} itens</span>
-      </div>
-      <div style="overflow-x:auto;">
-      <table>
-        <thead>
-          <tr>
-            <th style="width:40%;">Item</th>
-            <th style="width:20%;">Status</th>
-            <th style="width:20%;">Valor estimado</th>
-            <th style="width:15%;">Categoria</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody class="pt-items-tbody"></tbody>
-      </table>
-      </div>
-      <button class="add-btn" data-cat="${cat}">+ Adicionar item em ${cat}</button>
-    `;
-    container.appendChild(section);
-
-    const tbody = section.querySelector('.pt-items-tbody');
-    items.forEach(it => tbody.appendChild(renderPortugalRow(it)));
-    section.querySelector('.add-btn').addEventListener('click', () => {
-      portugal.push({ id: ptNextId(), item: '', categoria: cat, status: 'Levar', valor: 0 });
-      salvarPortugal();
-      renderPortugal();
-    });
-  });
-
-  atualizarResumoPortugal();
-}
 
 function renderPortugalRow(it) {
   const tr = document.createElement('tr');
