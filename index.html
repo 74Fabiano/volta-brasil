@@ -337,6 +337,7 @@
     <button class="tab" data-tab="lista">Lista de compras</button>
     <button class="tab" data-tab="portugal">Portugal</button>
     <button class="tab" data-tab="impressao3d">Impressão 3D</button>
+    <button class="tab" data-tab="anotacoes">Anotações</button>
     <button class="tab" data-tab="invest">Investimentos</button>
   </div>
 
@@ -913,6 +914,38 @@
     </div>
   </div>
 
+  <!-- ====== ANOTAÇÕES ====== -->
+  <div class="panel" data-panel="anotacoes">
+    <div class="alert alert-info">
+      Espaço para anotações livres: ideias, lembretes, contatos, pesquisas. Organize por categoria e use a busca para encontrar rápido.
+    </div>
+
+    <div class="toolbar">
+      <button class="primary" onclick="adicionarAnotacao()">+ Nova anotação</button>
+      <input type="text" id="anotacao-busca" placeholder="🔍 Buscar..." style="flex:1;min-width:200px;padding:6px 10px;">
+      <select id="anotacao-filtro-cat" style="padding:6px 10px;">
+        <option value="">Todas as categorias</option>
+      </select>
+    </div>
+
+    <div class="summary-box">
+      <div class="summary-cell">
+        <div class="lbl">Total de anotações</div>
+        <div class="val" id="an-total">0</div>
+      </div>
+      <div class="summary-cell">
+        <div class="lbl">Categorias</div>
+        <div class="val" id="an-categorias">0</div>
+      </div>
+      <div class="summary-cell">
+        <div class="lbl">Mais recente</div>
+        <div class="val" id="an-recente" style="font-size:13px;">—</div>
+      </div>
+    </div>
+
+    <div id="anotacoes-container"></div>
+  </div>
+
   <!-- ====== INVESTIMENTOS ====== -->
   <div class="panel" data-panel="invest">
     <div class="alert alert-warn">
@@ -1274,12 +1307,13 @@ async function recarregarDaNuvem() {
   try {
     setSyncStatus('↻ Buscando dados da nuvem...', 'sync');
     // Buscar as 5 tabelas em paralelo
-    const [resLista, resImp, resFil, resPC, resPT] = await Promise.all([
+    const [resLista, resImp, resFil, resPC, resPT, resAN] = await Promise.all([
       fetch(API_URL + '?tabela=lista').then(r => r.json()),
       fetch(API_URL + '?tabela=impressoras').then(r => r.json()),
       fetch(API_URL + '?tabela=filamentos').then(r => r.json()),
       fetch(API_URL + '?tabela=setup_pc').then(r => r.json()).catch(() => ({ ok: true, items: [] })),
-      fetch(API_URL + '?tabela=portugal').then(r => r.json()).catch(() => ({ ok: true, items: [] }))
+      fetch(API_URL + '?tabela=portugal').then(r => r.json()).catch(() => ({ ok: true, items: [] })),
+      fetch(API_URL + '?tabela=anotacoes').then(r => r.json()).catch(() => ({ ok: true, items: [] }))
     ]);
 
     if (!resLista.ok) throw new Error('lista: ' + (resLista.error || 'falha'));
@@ -1363,7 +1397,20 @@ async function recarregarDaNuvem() {
       if (typeof renderPortugal === 'function') renderPortugal();
     }
 
-    const totalItens = lista.length + (resImp.items || []).length + (resFil.items || []).length + ((resPC && resPC.items) ? resPC.items.length : 0) + ((resPT && resPT.items) ? resPT.items.length : 0);
+    // Anotações
+    if (typeof anotacoes !== 'undefined' && resAN && resAN.ok && resAN.items) {
+      anotacoes = resAN.items.map(it => ({
+        id: parseInt(it.id) || 0,
+        titulo: String(it.titulo || ''),
+        conteudo: String(it.conteudo || ''),
+        categoria: String(it.categoria || 'Geral'),
+        data: String(it.data || '')
+      }));
+      localStorage.setItem(KEY_ANOTACOES, JSON.stringify(anotacoes));
+      if (typeof renderAnotacoes === 'function') renderAnotacoes();
+    }
+
+     const totalItens = lista.length + (resImp.items || []).length + (resFil.items || []).length + ((resPC && resPC.items) ? resPC.items.length : 0) + ((resPT && resPT.items) ? resPT.items.length : 0) + ((resAN && resAN.items) ? resAN.items.length : 0);
     setSyncStatus('☁️ Sincronizado · ' + totalItens + ' registros', 'ok');
   } catch (e) {
     console.error(e);
@@ -2160,6 +2207,131 @@ function renderPortugal() {
   const container = document.getElementById('pt-categorias-container');
   if (!container) return;
   container.innerHTML = '';
+
+/* ============================================ */
+/* ============ ABA ANOTAÇÕES ================ */
+/* ============================================ */
+
+const KEY_ANOTACOES = 'volta_brasil_anotacoes';
+
+const ANOTACOES_PADRAO = [
+  { id: 1, titulo: 'Confirmar oferta de liquidação FIES', conteudo: 'Ligar na Caixa para confirmar se o desconto de 77% (R$ 9.945,50) tem prazo. Anotar data limite. Avaliar se quito antes ou depois da volta.', categoria: 'Financeiro', data: '2026-05-20' },
+  { id: 2, titulo: 'Pesquisar cidades do interior', conteudo: 'Listar 3-5 cidades candidatas. Critérios: custo de vida, qualidade da escola, proximidade da família, mercado de trabalho, internet boa.', categoria: 'Mudança', data: '2026-05-20' },
+  { id: 3, titulo: 'Estudar impressão 3D - Fase 1', conteudo: 'Ver série do Makers Muse sobre FDM básico. Entender slicing no Bambu Studio. 1h por semana.', categoria: 'Estudos', data: '2026-05-20' },
+  { id: 4, titulo: 'Consultar Serasa', conteudo: 'Entrar em serasa.com.br com CPF e ver exatamente o que está negativado. Verificar se há outras pendências além do FIES.', categoria: 'Financeiro', data: '2026-05-20' },
+  { id: 5, titulo: 'Documentos do filho para escola', conteudo: 'Histórico escolar deve ser apostilado (Haia) e traduzido por tradutor juramentado. Pesquisar custos em PT antes de sair.', categoria: 'Mudança', data: '2026-05-20' }
+];
+
+const CATEGORIAS_PADRAO = ['Financeiro', 'Mudança', 'Estudos', 'Brasil', 'Portugal', 'Família', 'Trabalho', 'Geral'];
+
+let anotacoes = JSON.parse(localStorage.getItem(KEY_ANOTACOES) || 'null') || JSON.parse(JSON.stringify(ANOTACOES_PADRAO));
+
+function salvarAnotacoes() {
+  localStorage.setItem(KEY_ANOTACOES, JSON.stringify(anotacoes));
+  agendarSalvarTabela('anotacoes', () => anotacoes);
+}
+
+function anNextId() {
+  return anotacoes.length ? Math.max(...anotacoes.map(a => a.id)) + 1 : 1;
+}
+
+function todasCategorias() {
+  const cats = new Set(CATEGORIAS_PADRAO);
+  anotacoes.forEach(a => { if (a.categoria) cats.add(a.categoria); });
+  return Array.from(cats).sort();
+}
+
+function renderAnotacoes() {
+  const container = document.getElementById('anotacoes-container');
+  if (!container) return;
+
+  // Atualizar filtro de categorias
+  const filtroCat = document.getElementById('anotacao-filtro-cat');
+  const valorFiltro = filtroCat.value;
+  filtroCat.innerHTML = '<option value="">Todas as categorias</option>';
+  todasCategorias().forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c;
+    opt.textContent = c;
+    if (c === valorFiltro) opt.selected = true;
+    filtroCat.appendChild(opt);
+  });
+
+  // Aplicar busca e filtro
+  const busca = document.getElementById('anotacao-busca').value.toLowerCase();
+  const catFiltro = filtroCat.value;
+  const filtradas = anotacoes.filter(a => {
+    const matchBusca = !busca || (a.titulo + ' ' + a.conteudo).toLowerCase().includes(busca);
+    const matchCat = !catFiltro || a.categoria === catFiltro;
+    return matchBusca && matchCat;
+  });
+
+  // Ordenar por data desc
+  filtradas.sort((a, b) => (b.data || '').localeCompare(a.data || ''));
+
+  container.innerHTML = '';
+  if (filtradas.length === 0) {
+    container.innerHTML = '<div class="card" style="text-align:center;color:var(--text-3);">Nenhuma anotação encontrada.</div>';
+    atualizarResumoAnotacoes();
+    return;
+  }
+
+  filtradas.forEach(a => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;flex-wrap:wrap;">
+        <input type="text" value="${escapeHtml(a.titulo)}" data-field="titulo" placeholder="Título" style="flex:1;min-width:200px;font-size:15px;font-weight:500;">
+        <input type="date" value="${escapeHtml(a.data)}" data-field="data">
+        <select data-field="categoria">
+          ${todasCategorias().map(c => `<option value="${c}" ${c === a.categoria ? 'selected' : ''}>${c}</option>`).join('')}
+        </select>
+        <button class="del-btn" title="Remover">✕</button>
+      </div>
+      <textarea data-field="conteudo" rows="4" style="width:100%;font-family:inherit;font-size:13px;padding:8px;" placeholder="Escreva sua anotação...">${escapeHtml(a.conteudo)}</textarea>
+    `;
+    card.querySelectorAll('input, select, textarea').forEach(el => {
+      el.addEventListener('change', () => {
+        const item = anotacoes.find(x => x.id === a.id);
+        if (!item) return;
+        item[el.dataset.field] = el.value;
+        salvarAnotacoes();
+        atualizarResumoAnotacoes();
+      });
+    });
+    card.querySelector('.del-btn').addEventListener('click', () => {
+      if (confirm('Remover esta anotação?')) {
+        anotacoes = anotacoes.filter(x => x.id !== a.id);
+        salvarAnotacoes();
+        renderAnotacoes();
+      }
+    });
+    container.appendChild(card);
+  });
+
+  atualizarResumoAnotacoes();
+}
+
+function atualizarResumoAnotacoes() {
+  document.getElementById('an-total').textContent = anotacoes.length;
+  const cats = new Set(anotacoes.map(a => a.categoria).filter(Boolean));
+  document.getElementById('an-categorias').textContent = cats.size;
+  const ordenadas = [...anotacoes].sort((a, b) => (b.data || '').localeCompare(a.data || ''));
+  const recente = ordenadas[0];
+  document.getElementById('an-recente').textContent = recente ? (recente.data + ' · ' + (recente.titulo || 'sem título').substring(0, 30)) : '—';
+}
+
+function adicionarAnotacao() {
+  const hoje = new Date().toISOString().slice(0, 10);
+  anotacoes.unshift({ id: anNextId(), titulo: '', conteudo: '', categoria: 'Geral', data: hoje });
+  salvarAnotacoes();
+  renderAnotacoes();
+}
+
+document.getElementById('anotacao-busca').addEventListener('input', renderAnotacoes);
+document.getElementById('anotacao-filtro-cat').addEventListener('change', renderAnotacoes);
+
+renderAnotacoes();
 
   PT_CATEGORIAS.forEach(cat => {
     const items = portugal.filter(i => i.categoria === cat);
